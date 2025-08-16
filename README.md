@@ -10,6 +10,14 @@ Local-first GPT-4o chat and image generation app built with **monorepo architect
 - Follows Test-Driven Development (TDD) with comprehensive testing
 - Implements dual-branch Git strategy for local/production environments
 
+## 🔗 Live Demo
+
+Experience GPT Image Generator in action! The application is deployed and ready to check, consider it is still in development stage:
+
+[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-GPTImageGenerator-blue?style=for-the-badge&logo=vercel&logoColor=white)](https://gpt-image-generator-ehkarabas.vercel.app/)
+
+**✨ Try it now:** [https://gpt-image-generator-ehkarabas.vercel.app/](https://gpt-image-generator-ehkarabas.vercel.app/)
+
 ---
 
 ## Table of Contents
@@ -714,26 +722,59 @@ tests/                        # All tests at ROOT level
 └── fixtures/                 # Shared test data
 ```
 
-### TDD Workflow
+### TDD Workflow - E2E Tests MANDATORY
 
-1. **Write Test First**:
+**CRITICAL REQUIREMENT**: ALL features MUST follow TDD approach with E2E tests written BEFORE implementation.
+
+1. **Create E2E Test FIRST (MANDATORY)**:
    ```bash
-   # Create test file before component
+   # STEP 1: Create E2E test file BEFORE any feature work
+   touch tests/e2e/frontend/[feature-name].spec.ts
+   # Write comprehensive E2E test scenarios first (Red phase)
+   ```
+
+2. **Verify Test Fails (TDD Red Phase)**:
+   ```bash
+   # STEP 2: Ensure E2E test fails before implementation
+   npm run test:e2e
+   echo "E2E test failing as expected - proceeding with implementation"
+   ```
+
+3. **Implement Feature (TDD Green Phase)**:
+   ```bash
+   # STEP 3: Build component/feature to pass E2E tests
+   # Implementation goes here...
+   
+   # STEP 4: Verify E2E test passes
+   npm run test:e2e
+   echo "E2E test passing - feature ready for production"
+   ```
+
+4. **Production Validation**:
+   ```bash
+   # STEP 5: MANDATORY before config/remote merge
+   npm run test:e2e:remote     # Production config E2E tests
+   npm run test:coverage       # Coverage requirements
+   ```
+
+**Unit Test TDD (Secondary)**:
+1. **Write Unit Test First**:
+   ```bash
+   # Create unit test file after E2E tests
    tests/unit/frontend/components/chat/new-component.test.tsx
    ```
 
 2. **Implement Component**:
    ```bash
-   # Build component to pass tests
+   # Build component to pass unit tests
    frontend/components/chat/new-component.tsx
    ```
 
-3. **Run Tests**:
+3. **Run All Tests**:
    ```bash
-   npm run test                    # Unit tests only
-   npm run test:watch              # Watch mode
-   npm run test:coverage           # With coverage
-   npm run test:e2e                # E2E tests
+   npm run test                    # Unit tests
+   npm run test:e2e                # E2E tests (MANDATORY)
+   npm run test:coverage           # Coverage validation
    ```
 
 ### Current Test Coverage
@@ -781,11 +822,13 @@ npm run test:e2e:ui       # Playwright UI mode
 - 🔄 **Authentication Flows**: Supabase Auth integration
 - 🔄 **Error Boundaries**: Component error handling
 
-**Quality Gates**:
-- All tests must pass before merging to `config/remote`
-- Code coverage minimum: 80% for critical paths
-- E2E tests required before production deployment
-- Zero TypeScript errors tolerated
+**Quality Gates - MANDATORY ENFORCEMENT**:
+- **E2E Tests MANDATORY**: NO feature can proceed to config/remote without comprehensive E2E test coverage
+- **Test-First Development**: E2E tests must be written BEFORE feature implementation (TDD)
+- **Production Readiness**: E2E tests required before production deployment (ZERO TOLERANCE)
+- **Code Coverage**: Minimum 80% for critical paths
+- **Type Safety**: Zero TypeScript errors tolerated
+- **CI/CD Gate**: All tests must pass before merging to `config/remote`
 
 ## Keep-Alive Strategy
 
