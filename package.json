@@ -41,7 +41,7 @@
     "supabase:reset": "npx supabase db reset",
     "supabase:migrate": "npx supabase migration up",
     "supabase:functions:serve": "npx supabase functions serve --import-map ./supabase/functions/import_map.json",
-    "ci:prepare:production": "npm run env:remote --workspace=frontend",
+    "ci:prepare:production": "node scripts/ci/prepare-production.js",
     "db:test:remote": "node scripts/ci/db-test-remote.js",
     "db:migrate:test": "node scripts/ci/db-migrate-test.js",
     "deploy:verify": "node scripts/ci/deploy-verify.js",
