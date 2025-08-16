@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
-import supabase from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase/client'
 
 export interface Profile {
 	user_id: string
