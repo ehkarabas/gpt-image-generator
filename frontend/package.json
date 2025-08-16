@@ -10,8 +10,8 @@
     "build:remote": "npm run env:remote && npm run build",
     "start": "next start",
     "lint": "next lint",
-    "env:local": "cp .env.local .env",
-    "env:remote": "cp .env.production .env"
+    "env:local": "node -e \"const fs=require('fs');fs.copyFileSync('.env.local','.env');console.log('copied .env.local -> .env');\"",
+    "env:remote": "node -e \"const fs=require('fs');fs.copyFileSync('.env.production','.env');console.log('copied .env.production -> .env');\""
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
