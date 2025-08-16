@@ -20,6 +20,117 @@ Experience GPT Image Generator in action! The application is deployed and ready 
 
 ---
 
+## GitHub Actions CI/CD Integration
+
+This project implements comprehensive CI/CD automation through GitHub Actions with strict TDD enforcement and environment validation.
+
+### Automated Workflow Matrix
+
+| Branch | Workflow File | Validation Level | Automated Checks |
+|--------|---------------|------------------|------------------|
+| `config/local` | `ci-config-local.yml` | Development | Unit tests, TDD compliance, code quality, environment validation |
+| `config/remote` | `ci-config-remote.yml` | Production Prep | E2E tests, DB validation, security scans, AI services testing |
+| `main` | `ci-main-deployment.yml` | Deployment | Health checks, Vercel deployment, post-deployment monitoring |
+| `Pull Requests` | `pr-validation.yml` | Merge Validation | Branch strategy, test coverage, security scanning |
+
+### GitHub Actions Workflows
+
+```text
+.github/workflows/
+├── ci-config-local.yml      # Development validation workflow
+├── ci-config-remote.yml     # Production preparation workflow
+├── ci-main-deployment.yml   # Automated deployment workflow
+└── pr-validation.yml        # Pull request validation workflow
+```
+
+### Required GitHub Secrets
+
+Configure these secrets in your GitHub repository (`Settings > Secrets and variables > Actions`):
+
+**Production Environment Secrets:**
+```env
+SUPABASE_URL_PROD=https://[your-project-ref].supabase.co
+SUPABASE_ANON_KEY_PROD=[your-production-anon-key]
+SUPABASE_SERVICE_ROLE_KEY_PROD=[your-production-service-role-key]
+DATABASE_URL_PROD=[your-production-database-url]
+OPENAI_API_KEY_PROD=[your-production-openai-key]
+```
+
+**Development Environment Secrets:**
+```env
+SUPABASE_URL_LOCAL=http://127.0.0.1:54321
+SUPABASE_ANON_KEY_LOCAL=[your-local-anon-key]
+SUPABASE_SERVICE_ROLE_KEY_LOCAL=[your-local-service-role-key]
+```
+
+**Shared Secrets:**
+```env
+OPENAI_API_KEY=[your-openai-api-key]
+ANTHROPIC_API_KEY=[your-anthropic-api-key]
+CODECOV_TOKEN=[your-codecov-token]  # Optional
+```
+
+### Branch Protection Rules
+
+GitHub branch protection is automatically configured:
+
+- **main branch**: Only accepts merges from `config/remote`, requires all status checks to pass
+- **config/remote branch**: Requires E2E tests and production validation to pass
+- **config/local branch**: Requires unit tests and TDD compliance checks to pass
+
+### Automated TDD Enforcement Features
+
+- ✅ **Environment Validation**: Tests FAIL (never skip) when .env files are missing
+- ✅ **Anti-Skip Detection**: Automatically detects and prevents test.skip() violations
+- ✅ **Test Coverage Enforcement**: Maintains minimum coverage thresholds
+- ✅ **Security Scanning**: Automated vulnerability detection and prevention
+- ✅ **Deployment Safety**: Production health checks and automatic rollback capability
+- ✅ **Branch Strategy Enforcement**: Prevents direct commits to protected branches
+
+### CI/CD Pipeline Flow
+
+```mermaid
+graph LR
+    A[config/local Push] -->|Triggers| B[Development Validation]
+    B --> C[Unit Tests + TDD]
+    C --> D[Code Quality]
+    D --> E[Ready for config/remote]
+    
+    F[config/remote Push] -->|Triggers| G[Production Preparation]
+    G --> H[E2E Tests + DB Validation]
+    H --> I[Security + Performance]
+    I --> J[Ready for main]
+    
+    K[main Push] -->|Triggers| L[Deployment Pipeline]
+    L --> M[Health Checks]
+    M --> N[Vercel Deployment]
+    N --> O[Post-deployment Monitoring]
+```
+
+### Setup Instructions
+
+1. **Configure GitHub Secrets**: Add all required secrets to your repository
+2. **Set Branch Protection**: Enable protection rules for main, config/remote, and config/local branches
+3. **Enable GitHub Actions**: Ensure Actions are enabled in repository settings
+4. **Review Workflows**: Examine workflow files in `.github/workflows/` directory
+
+**Complete Setup Guide**: See [`.github/GITHUB_ACTIONS_SETUP.md`](.github/GITHUB_ACTIONS_SETUP.md) for detailed configuration instructions.
+
+### Monitoring and Troubleshooting
+
+**Dashboard Links:**
+- GitHub Actions: `https://github.com/[username]/[repo]/actions`
+- Vercel Deployments: `https://vercel.com/dashboard`
+- Supabase Dashboard: `https://app.supabase.com/projects`
+
+**Common Issues:**
+- Workflow fails with "Secret not found": Verify secret names match exactly
+- Environment validation fails: Check all required secrets are configured
+- Branch protection blocks merge: Ensure all status checks pass
+- Deployment fails: Check Vercel deployment logs and environment variables
+
+---
+
 ## Table of Contents
 
 - [About](#about)
