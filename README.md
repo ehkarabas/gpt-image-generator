@@ -10,6 +10,127 @@ Local-first GPT-4o chat and image generation app built with **monorepo architect
 - Follows Test-Driven Development (TDD) with comprehensive testing
 - Implements dual-branch Git strategy for local/production environments
 
+## 🔗 Live Demo
+
+Experience GPT Image Generator in action! The application is deployed and ready to check, consider it is still in development stage:
+
+[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-GPTImageGenerator-blue?style=for-the-badge&logo=vercel&logoColor=white)](https://gpt-image-generator-ehkarabas.vercel.app/)
+
+**✨ Try it now:** [https://gpt-image-generator-ehkarabas.vercel.app/](https://gpt-image-generator-ehkarabas.vercel.app/)
+
+---
+
+## GitHub Actions CI/CD Integration
+
+This project implements comprehensive CI/CD automation through GitHub Actions with strict TDD enforcement and environment validation.
+
+### Automated Workflow Matrix
+
+| Branch | Workflow File | Validation Level | Automated Checks |
+|--------|---------------|------------------|------------------|
+| `config/local` | `ci-config-local.yml` | Development | Unit tests, TDD compliance, code quality, environment validation |
+| `config/remote` | `ci-config-remote.yml` | Production Prep | E2E tests, DB validation, security scans, AI services testing |
+| `main` | `ci-main-deployment.yml` | Deployment | Health checks, Vercel deployment, post-deployment monitoring |
+| `Pull Requests` | `pr-validation.yml` | Merge Validation | Branch strategy, test coverage, security scanning |
+
+### GitHub Actions Workflows
+
+```text
+.github/workflows/
+├── ci-config-local.yml      # Development validation workflow
+├── ci-config-remote.yml     # Production preparation workflow
+├── ci-main-deployment.yml   # Automated deployment workflow
+└── pr-validation.yml        # Pull request validation workflow
+```
+
+### Required GitHub Secrets
+
+Configure these secrets in your GitHub repository (`Settings > Secrets and variables > Actions`):
+
+**Production Environment Secrets:**
+```env
+SUPABASE_URL_PROD=https://[your-project-ref].supabase.co
+SUPABASE_ANON_KEY_PROD=[your-production-anon-key]
+SUPABASE_SERVICE_ROLE_KEY_PROD=[your-production-service-role-key]
+DATABASE_URL_PROD=[your-production-database-url]
+OPENAI_API_KEY_PROD=[your-production-openai-key]
+```
+
+**Development Environment Secrets:**
+```env
+SUPABASE_URL_LOCAL=http://127.0.0.1:54321
+SUPABASE_ANON_KEY_LOCAL=[your-local-anon-key]
+SUPABASE_SERVICE_ROLE_KEY_LOCAL=[your-local-service-role-key]
+```
+
+**Shared Secrets:**
+```env
+OPENAI_API_KEY=[your-openai-api-key]
+ANTHROPIC_API_KEY=[your-anthropic-api-key]
+CODECOV_TOKEN=[your-codecov-token]  # Optional
+```
+
+### Branch Protection Rules
+
+GitHub branch protection is automatically configured:
+
+- **main branch**: Only accepts merges from `config/remote`, requires all status checks to pass
+- **config/remote branch**: Requires E2E tests and production validation to pass
+- **config/local branch**: Requires unit tests and TDD compliance checks to pass
+
+### Automated TDD Enforcement Features
+
+- ✅ **Environment Validation**: Tests FAIL (never skip) when .env files are missing
+- ✅ **Anti-Skip Detection**: Automatically detects and prevents test.skip() violations
+- ✅ **Test Coverage Enforcement**: Maintains minimum coverage thresholds
+- ✅ **Security Scanning**: Automated vulnerability detection and prevention
+- ✅ **Deployment Safety**: Production health checks and automatic rollback capability
+- ✅ **Branch Strategy Enforcement**: Prevents direct commits to protected branches
+
+### CI/CD Pipeline Flow
+
+```mermaid
+graph LR
+    A[config/local Push] -->|Triggers| B[Development Validation]
+    B --> C[Unit Tests + TDD]
+    C --> D[Code Quality]
+    D --> E[Ready for config/remote]
+    
+    F[config/remote Push] -->|Triggers| G[Production Preparation]
+    G --> H[E2E Tests + DB Validation]
+    H --> I[Security + Performance]
+    I --> J[Ready for main]
+    
+    K[main Push] -->|Triggers| L[Deployment Pipeline]
+    L --> M[Health Checks]
+    M --> N[Vercel Deployment]
+    N --> O[Post-deployment Monitoring]
+```
+
+### Setup Instructions
+
+**AGENT AWARENESS**: This CI/CD system is fully automated. Once configured, all agent development work automatically triggers appropriate validation workflows.
+
+1. **Configure GitHub Secrets**: Add all required secrets to your repository
+2. **Set Branch Protection**: Enable protection rules for main, config/remote, and config/local branches
+3. **Enable GitHub Actions**: Ensure Actions are enabled in repository settings
+4. **Review Workflows**: Examine workflow files in `.github/workflows/` directory
+
+**Complete Setup Guide**: See [`.github/GITHUB_ACTIONS_SETUP.md`](.github/GITHUB_ACTIONS_SETUP.md) for detailed configuration instructions.
+
+### Monitoring and Troubleshooting
+
+**Dashboard Links:**
+- GitHub Actions: `https://github.com/[username]/[repo]/actions`
+- Vercel Deployments: `https://vercel.com/dashboard`
+- Supabase Dashboard: `https://app.supabase.com/projects`
+
+**Common Issues:**
+- Workflow fails with "Secret not found": Verify secret names match exactly
+- Environment validation fails: Check all required secrets are configured
+- Branch protection blocks merge: Ensure all status checks pass
+- Deployment fails: Check Vercel deployment logs and environment variables
+
 ---
 
 ## Table of Contents
@@ -35,7 +156,7 @@ Local-first GPT-4o chat and image generation app built with **monorepo architect
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-  - [Environment Configuration](#environment-configuration)
+  - [Environment Setup & TDD Compliance](#environment-setup--tdd-compliance)
   - [Local Development](#local-development)
 - [Testing Strategy](#testing-strategy)
 - [Supabase Setup & Migrations](#supabase-setup--migrations)
@@ -626,37 +747,164 @@ npm run dev           # Frontend development server
      --data '{"name":"Functions"}'
    ```
 
-### Environment Configuration
+### Environment Setup & TDD Compliance
 
-Local Development (`.env.local`):
+**CRITICAL**: This project enforces strict TDD compliance for environment configuration. Tests MUST FAIL (never skip) when environment is misconfigured.
 
-```env
-DATABASE_URL="file:./local.db"
-NODE_ENV="development"
-DEPLOYMENT_ENV="local"
-NEXT_PUBLIC_API_URL="http://localhost:3001"
-SOCKET_URL="http://localhost:3001"
+#### Environment File Structure
 
-# Supabase (local stack will inject service URLs; add if you use client SDK locally)
-NEXT_PUBLIC_SUPABASE_URL="http://localhost:54321"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="anon-dev-key"
+```text
+.
+├── .env.local                   # Local development (gitignored)
+├── .env.local.example          # Template for local setup  
+├── .env.production             # Production config (gitignored)
+├── .env.production.example     # Template for production
+└── frontend/
+    ├── .env                    # Active env (auto-copied)
+    ├── .env.local             # Frontend local (auto-copied)
+    └── .env.production        # Frontend prod (auto-copied)
 ```
 
-Production (`.env.production`):
+#### TDD Environment Validation Commands
 
-```env
-# Supabase Database (connection pooling)
-DATABASE_URL="postgresql://postgres.[ref]:[password]@[host].pooler.supabase.com:5432/postgres?sslmode=require&pgbouncer=true"
-# Direct DB for migrations (optional)
-DIRECT_URL="postgresql://postgres.[ref]:[password]@[host].pooler.supabase.com:6543/postgres"
-
-NEXT_PUBLIC_SUPABASE_URL="https://[ref].supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="[anon-key]"
-NEXT_PUBLIC_API_URL="https://gpt-image-generator-ehkarabas.onrender.com"
-SOCKET_URL="https://gpt-image-generator-ehkarabas.onrender.com"
-NODE_ENV="production"
-DEPLOYMENT_ENV="remote"
+**🚫 NEVER use these commands (creates false positives)**:
+```bash
+# ❌ FORBIDDEN - No environment validation
+playwright test
+npm run test:e2e
+test.skip(!process.env.VAR, 'Not configured')
 ```
+
+**✅ ALWAYS use these commands (proper TDD validation)**:
+```bash
+# ✅ CORRECT - Validates environment first
+npm run test:e2e:local      # For local development
+npm run test:e2e:remote     # For production validation
+npm run ci:prepare:local    # Manual environment preparation
+```
+
+#### Environment Setup Process
+
+**Step 1: Create Local Environment**
+```bash
+# Copy example files
+cp .env.local.example .env.local
+cp .env.production.example .env.production
+
+# Validate environment setup
+npm run ci:prepare:local
+# ✅ Should show: "Local environment prepared successfully!"
+# ❌ If fails: Fix missing variables and retry
+```
+
+**Step 2: Configure API Keys**
+
+Edit `.env.local` with your actual keys:
+```env
+# Required Keys
+OPENAI_API_KEY=sk-proj-YOUR-KEY-HERE
+ANTHROPIC_API_KEY=sk-ant-api03-YOUR-KEY-HERE
+
+# Supabase Configuration (from supabase start)
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
+
+# Development Configuration
+DEBUG=false
+DEPLOYMENT_ENV=local
+OPENAI_MODEL_CHAT=gpt-4o
+OPENAI_MODEL_IMAGE=dall-e-3
+```
+
+**Step 3: Test Environment Configuration**
+```bash
+# Verify environment validation works
+npm run test:e2e:local
+# ✅ Should run tests successfully
+# ❌ If fails with env errors: Check your .env.local file
+```
+
+#### Production Environment Setup
+
+Edit `.env.production` with production values:
+```env
+# Required Keys (from secrets)
+OPENAI_API_KEY=${OPENAI_API_KEY_PROD}
+ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY_PROD}
+
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_PROJECT_URL}
+NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+DATABASE_URL=${SUPABASE_DATABASE_URL}
+
+# Production Configuration
+DEBUG=false
+LOG_LEVEL=warn
+DEPLOYMENT_ENV=remote
+NODE_ENV=production
+
+# Production Settings
+RATE_LIMIT_REQUESTS_CHAT=30
+RATE_LIMIT_REQUESTS_IMAGE=5
+CONTENT_FILTER_LEVEL=high
+```
+
+#### Environment Validation Scripts
+
+The project includes comprehensive validation scripts that ensure TDD compliance:
+
+**scripts/ci/prepare-local.js**: Validates local environment
+- ❌ **FAILS** tests if .env.local missing
+- ❌ **FAILS** tests if required variables missing
+- ✅ **PASSES** only when environment is complete
+
+**scripts/ci/prepare-production.js**: Validates production environment  
+- ❌ **FAILS** tests if .env.production missing
+- ❌ **FAILS** tests if production variables missing
+- ✅ **PASSES** only when production environment is complete
+
+#### Troubleshooting Environment Issues
+
+**Error: ".env.local not found"**
+```bash
+# Solution:
+cp .env.local.example .env.local
+# Edit .env.local with your actual API keys
+npm run ci:prepare:local
+```
+
+**Error: "Missing environment variables"**
+```bash
+# Check which variables are missing:
+npm run ci:prepare:local
+# Add missing variables to .env.local
+# Required: OPENAI_API_KEY, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+```
+
+**Error: "E2E tests skipping"**
+```bash
+# This indicates TDD violation - tests should FAIL, not skip
+# Always use proper validation commands:
+npm run test:e2e:local    # Not: playwright test
+npm run test:e2e:remote   # Not: npm run test:e2e
+```
+
+#### Agent/Developer Guidelines
+
+**For AI Agents working on this project**:
+- ✅ **ALWAYS** validate environment before running tests
+- ✅ **ALWAYS** use `npm run ci:prepare:local` before E2E tests
+- ❌ **NEVER** use `test.skip()` for environment issues
+- ❌ **NEVER** proceed when environment validation fails
+
+**For Developers**:
+- Follow the setup process exactly as documented
+- Never commit .env.local or .env.production files
+- Use the validation scripts to ensure proper setup
+- Report environment issues immediately - do not work around them
 
 ### Local Development
 
@@ -714,26 +962,59 @@ tests/                        # All tests at ROOT level
 └── fixtures/                 # Shared test data
 ```
 
-### TDD Workflow
+### TDD Workflow - E2E Tests MANDATORY
 
-1. **Write Test First**:
+**CRITICAL REQUIREMENT**: ALL features MUST follow TDD approach with E2E tests written BEFORE implementation.
+
+1. **Create E2E Test FIRST (MANDATORY)**:
    ```bash
-   # Create test file before component
+   # STEP 1: Create E2E test file BEFORE any feature work
+   touch tests/e2e/frontend/[feature-name].spec.ts
+   # Write comprehensive E2E test scenarios first (Red phase)
+   ```
+
+2. **Verify Test Fails (TDD Red Phase)**:
+   ```bash
+   # STEP 2: Ensure E2E test fails before implementation
+   npm run test:e2e
+   echo "E2E test failing as expected - proceeding with implementation"
+   ```
+
+3. **Implement Feature (TDD Green Phase)**:
+   ```bash
+   # STEP 3: Build component/feature to pass E2E tests
+   # Implementation goes here...
+   
+   # STEP 4: Verify E2E test passes
+   npm run test:e2e
+   echo "E2E test passing - feature ready for production"
+   ```
+
+4. **Production Validation**:
+   ```bash
+   # STEP 5: MANDATORY before config/remote merge
+   npm run test:e2e:remote     # Production config E2E tests
+   npm run test:coverage       # Coverage requirements
+   ```
+
+**Unit Test TDD (Secondary)**:
+1. **Write Unit Test First**:
+   ```bash
+   # Create unit test file after E2E tests
    tests/unit/frontend/components/chat/new-component.test.tsx
    ```
 
 2. **Implement Component**:
    ```bash
-   # Build component to pass tests
+   # Build component to pass unit tests
    frontend/components/chat/new-component.tsx
    ```
 
-3. **Run Tests**:
+3. **Run All Tests**:
    ```bash
-   npm run test                    # Unit tests only
-   npm run test:watch              # Watch mode
-   npm run test:coverage           # With coverage
-   npm run test:e2e                # E2E tests
+   npm run test                    # Unit tests
+   npm run test:e2e                # E2E tests (MANDATORY)
+   npm run test:coverage           # Coverage validation
    ```
 
 ### Current Test Coverage
@@ -781,11 +1062,13 @@ npm run test:e2e:ui       # Playwright UI mode
 - 🔄 **Authentication Flows**: Supabase Auth integration
 - 🔄 **Error Boundaries**: Component error handling
 
-**Quality Gates**:
-- All tests must pass before merging to `config/remote`
-- Code coverage minimum: 80% for critical paths
-- E2E tests required before production deployment
-- Zero TypeScript errors tolerated
+**Quality Gates - MANDATORY ENFORCEMENT**:
+- **E2E Tests MANDATORY**: NO feature can proceed to config/remote without comprehensive E2E test coverage
+- **Test-First Development**: E2E tests must be written BEFORE feature implementation (TDD)
+- **Production Readiness**: E2E tests required before production deployment (ZERO TOLERANCE)
+- **Code Coverage**: Minimum 80% for critical paths
+- **Type Safety**: Zero TypeScript errors tolerated
+- **CI/CD Gate**: All tests must pass before merging to `config/remote`
 
 ## Keep-Alive Strategy
 

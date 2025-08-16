@@ -1,0 +1,379 @@
+name: 'PR Validation: TDD Compliance & Branch Strategy Enforcement'
+
+on:
+  pull_request:
+    branches: ['config/local', 'config/remote', 'main']
+    types: [opened, synchronize, reopened, ready_for_review]
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  # Branch Strategy Validation
+  branch-strategy-validation:
+    name: 'Branch Strategy Compliance Check'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Validate Branch Strategy'
+        run: |
+          echo "🔍 Validating dual-configuration branch strategy..."
+          
+          SOURCE_BRANCH="${{ github.head_ref }}"
+          TARGET_BRANCH="${{ github.base_ref }}"
+          
+          echo "📋 PR Details:"
+          echo "   📤 Source: $SOURCE_BRANCH"
+          echo "   📥 Target: $TARGET_BRANCH"
+          
+          # Validate allowed merge paths
+          case "$TARGET_BRANCH" in
+            "config/local")
+              echo "✅ Merging to config/local - Feature development branch"
+              if [[ "$SOURCE_BRANCH" =~ ^(feature|fix|test|docs)/ ]]; then
+                echo "✅ Valid source branch pattern for config/local"
+              else
+                echo "❌ Invalid source branch for config/local"
+                echo "🛠️  Use: feature/, fix/, test/, or docs/ prefixes"
+                exit 1
+              fi
+              ;;
+            "config/remote")
+              if [ "$SOURCE_BRANCH" = "config/local" ]; then
+                echo "✅ Valid merge: config/local → config/remote (Production preparation)"
+              else
+                echo "❌ INVALID: config/remote only accepts merges from config/local"
+                echo "🚫 Direct commits to config/remote are FORBIDDEN"
+                exit 1
+              fi
+              ;;
+            "main")
+              if [ "$SOURCE_BRANCH" = "config/remote" ]; then
+                echo "✅ Valid merge: config/remote → main (Production deployment)"
+              else
+                echo "❌ INVALID: main only accepts merges from config/remote"
+                echo "🚫 Direct commits to main branch are FORBIDDEN"
+                exit 1
+              fi
+              ;;
+            *)
+              echo "❌ Invalid target branch: $TARGET_BRANCH"
+              echo "🛠️  Valid targets: config/local, config/remote, main"
+              exit 1
+              ;;
+          esac
+          
+          echo "✅ Branch strategy validation passed"
+
+  # TDD Compliance Check
+  tdd-compliance-check:
+    name: 'TDD Compliance Validation'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 'Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 'Install Dependencies'
+        run: npm ci
+
+      - name: 'Check for Test Files'
+        run: |
+          echo "🔍 Checking TDD compliance..."
+          
+          # Get changed files
+          git diff --name-only origin/${{ github.base_ref }}...HEAD > changed_files.txt
+          
+          # Check for new component/feature files without tests
+          NEW_COMPONENTS=$(grep -E "(components|lib|hooks).*\\.(ts|tsx)$" changed_files.txt || true)
+          
+          if [ -n "$NEW_COMPONENTS" ]; then
+            echo "📋 New component/feature files detected:"
+            echo "$NEW_COMPONENTS"
+            
+            # Check if corresponding test files exist or were added
+            while IFS= read -r file; do
+              if [[ "$file" =~ \.(test|spec)\.(ts|tsx)$ ]]; then
+                continue # Skip test files themselves
+              fi
+              
+              # Generate expected test file paths
+              TEST_FILE1="${file%.tsx}.test.tsx"
+              TEST_FILE2="${file%.ts}.test.ts"
+              TEST_FILE3="tests/unit/frontend/${file#frontend/}"
+              TEST_FILE3="${TEST_FILE3%.tsx}.test.tsx"
+              TEST_FILE3="${TEST_FILE3%.ts}.test.ts"
+              
+              if [ ! -f "$TEST_FILE1" ] && [ ! -f "$TEST_FILE2" ] && [ ! -f "$TEST_FILE3" ]; then
+                echo "❌ TDD VIOLATION: Missing test file for $file"
+                echo "🛠️  Expected test file: $TEST_FILE3"
+                TDD_VIOLATION=true
+              fi
+            done <<< "$NEW_COMPONENTS"
+            
+            if [ "$TDD_VIOLATION" = true ]; then
+              echo "🚫 TDD COMPLIANCE FAILED: All components must have tests"
+              exit 1
+            fi
+          fi
+          
+          echo "✅ TDD compliance check passed"
+
+      - name: 'Check for Anti-Skip Violations'
+        run: |
+          echo "🔍 Checking for test.skip() violations..."
+          
+          # Search for prohibited test.skip() patterns
+          if grep -r "test\\.skip.*env\|test\\.skip.*ENV" tests/ --include="*.ts" --include="*.tsx" 2>/dev/null; then
+            echo "❌ TDD VIOLATION: Found test.skip() for environment issues"
+            echo "🚫 Tests must FAIL (not skip) when environment is misconfigured"
+            exit 1
+          fi
+          
+          # Check for console.log instead of console.error in env validation
+          if grep -r "console\\.log.*skip.*env" . --include="*.js" --include="*.ts" 2>/dev/null; then
+            echo "❌ TDD VIOLATION: Found silent environment skip pattern"
+            echo "🚫 Use console.error() + process.exit(1) instead"
+            exit 1
+          fi
+          
+          echo "✅ Anti-skip compliance check passed"
+
+  # Environment Validation Test
+  environment-validation-test:
+    name: 'Environment Validation Test'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 'Install Dependencies'
+        run: npm ci
+
+      - name: 'Test Environment Validation (Should Fail)'
+        run: |
+          echo "🧪 Testing environment validation enforcement..."
+          
+          # Test that prepare scripts fail when no environment exists
+          if npm run ci:prepare:local 2>/dev/null; then
+            echo "❌ VALIDATION ERROR: prepare:local should FAIL without .env.local"
+            echo "🚫 Environment validation is not properly enforcing TDD compliance"
+            exit 1
+          else
+            echo "✅ Environment validation properly fails without .env.local"
+          fi
+
+      - name: 'Test Environment Validation (Should Pass)'
+        run: |
+          echo "🧪 Testing environment validation with proper setup..."
+          
+          # Create minimal .env.local for testing
+          echo "NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321" > .env.local
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=test-key" >> .env.local
+          echo "OPENAI_API_KEY=test-key" >> .env.local
+          
+          # Test that prepare scripts pass with environment
+          npm run ci:prepare:local
+          echo "✅ Environment validation passes with proper setup"
+
+  # Code Quality Check
+  code-quality-check:
+    name: 'Code Quality Validation'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 'Install Dependencies'
+        run: npm ci
+
+      - name: 'Run Linting'
+        run: npm run lint
+
+      - name: 'Run TypeScript Check'
+        run: npx tsc --noEmit
+
+      - name: 'Check Code Formatting'
+        run: npx prettier --check .
+
+  # Unit Tests
+  unit-tests:
+    name: 'Unit Tests Validation'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 'Install Dependencies'
+        run: npm ci
+
+      - name: 'Run Unit Tests'
+        run: npm run test
+
+      - name: 'Check Test Coverage'
+        run: npm run test:coverage
+
+  # Security Check
+  security-check:
+    name: 'Security Vulnerability Check'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout Repository'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 'Install Dependencies'
+        run: npm ci
+
+      - name: 'Security Audit'
+        run: npm audit --audit-level=high
+
+      - name: 'Check for Hardcoded Secrets'
+        run: |
+          echo "🔍 Checking for hardcoded secrets..."
+          
+          # Check for potential API keys or secrets
+          if grep -r -E "(sk-|sk_|key|secret|password|token)" . \
+             --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+             --exclude-dir=node_modules --exclude-dir=.git \
+             --exclude="*.test.*" --exclude="*.spec.*"; then
+            echo "⚠️  Potential secrets detected in code"
+            echo "🛠️  Review the above matches for hardcoded secrets"
+          else
+            echo "✅ No hardcoded secrets detected"
+          fi
+
+  # PR Summary and Approval
+  pr-validation-summary:
+    name: 'PR Validation Summary'
+    runs-on: ubuntu-latest
+    needs:
+      - branch-strategy-validation
+      - tdd-compliance-check
+      - environment-validation-test
+      - code-quality-check
+      - unit-tests
+      - security-check
+    if: always()
+    steps:
+      - name: 'PR Validation Summary'
+        run: |
+          echo "📋 PULL REQUEST VALIDATION RESULTS"
+          echo ""
+          echo "🔍 Validation Results:"
+          echo "   ✅ Branch Strategy: ${{ needs.branch-strategy-validation.result }}"
+          echo "   ✅ TDD Compliance: ${{ needs.tdd-compliance-check.result }}"
+          echo "   ✅ Environment Validation: ${{ needs.environment-validation-test.result }}"
+          echo "   ✅ Code Quality: ${{ needs.code-quality-check.result }}"
+          echo "   ✅ Unit Tests: ${{ needs.unit-tests.result }}"
+          echo "   ✅ Security Check: ${{ needs.security-check.result }}"
+          echo ""
+          
+          # Check if all validations passed
+          if [[ "${{ needs.branch-strategy-validation.result }}" == "success" ]] && \
+             [[ "${{ needs.tdd-compliance-check.result }}" == "success" ]] && \
+             [[ "${{ needs.environment-validation-test.result }}" == "success" ]] && \
+             [[ "${{ needs.code-quality-check.result }}" == "success" ]] && \
+             [[ "${{ needs.unit-tests.result }}" == "success" ]] && \
+             [[ "${{ needs.security-check.result }}" == "success" ]]; then
+            echo "🎉 ALL VALIDATIONS PASSED!"
+            echo "✅ PR is ready for review and merge"
+            echo ""
+            echo "🚀 Next Steps:"
+            echo "   1. Request code review from team members"
+            echo "   2. Address any review feedback"
+            echo "   3. Merge when approved"
+          else
+            echo "❌ VALIDATION FAILURES DETECTED"
+            echo "🚫 PR is NOT ready for merge"
+            echo ""
+            echo "🛠️  Required Actions:"
+            echo "   1. Fix all failing validation checks"
+            echo "   2. Push updates to trigger re-validation"
+            echo "   3. Ensure all checks pass before merge"
+            exit 1
+          fi
+
+  # Auto-Label PR
+  auto-label:
+    name: 'Auto-Label PR'
+    runs-on: ubuntu-latest
+    needs: pr-validation-summary
+    if: success()
+    steps:
+      - name: 'Add Success Labels'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: ['✅ validated', '🧪 tests-passing', '🔒 security-checked']
+            })
+
+  # Auto-Comment on Failure
+  auto-comment-failure:
+    name: 'Auto-Comment on Failure'
+    runs-on: ubuntu-latest
+    needs: pr-validation-summary
+    if: failure()
+    steps:
+      - name: 'Comment on Failed PR'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `## ❌ PR Validation Failed
+              
+              This PR has failed one or more validation checks. Please review the workflow logs and fix the issues before requesting review.
+              
+              ### Required Actions:
+              1. 🔍 Check the workflow logs above for specific failures
+              2. 🛠️ Fix all failing validation checks
+              3. 📤 Push updates to trigger re-validation
+              4. ✅ Ensure all checks pass before merge
+              
+              ### TDD Compliance Reminders:
+              - All new components must have corresponding test files
+              - Tests must FAIL (not skip) when environment is misconfigured
+              - No \\`test.skip()\\` for environment issues
+              - Use proper environment validation patterns
+              
+              *This comment was automatically generated by the PR validation workflow.*`
+            })

@@ -18,7 +18,7 @@ export interface UseAuthReturn {
 	profile: Profile | null
 	isLoading: boolean
 	isAuthenticated: boolean
-	error: AuthError | null
+	error: Error | null
 	signIn: (email: string, password: string) => Promise<void>
 	signUp: (email: string, password: string, metadata?: Record<string, any>) => Promise<void>
 	signInWithOAuth: (provider: 'google' | 'github' | 'discord') => Promise<void>
@@ -32,7 +32,7 @@ export function useAuth(): UseAuthReturn {
 	const [session, setSession] = useState<Session | null>(null)
 	const [profile, setProfile] = useState<Profile | null>(null)
 	const [isLoading, setIsLoading] = useState(true)
-	const [error, setError] = useState<AuthError | null>(null)
+	const [error, setError] = useState<Error | null>(null)
 
 	const isAuthenticated = !!user && !!session
 
@@ -223,14 +223,7 @@ export function useAuth(): UseAuthReturn {
 				.single()
 
 			if (error) {
-				// Normalize PostgrestError to AuthError-like shape for state
-				const normalized = {
-					name: 'PostgrestError',
-					message: (error as any)?.message || 'Profile update error',
-					status: 400,
-					__isAuthError: true,
-				} as unknown as AuthError
-				setError(normalized)
+				setError(error)
 				return
 			}
 
