@@ -116,6 +116,14 @@ vi.mock('lucide-react', () => ({
   X: () => React.createElement('div', { 'data-testid': 'x-icon' }),
   Check: () => React.createElement('div', { 'data-testid': 'check-icon' }),
   AlertCircle: () => React.createElement('div', { 'data-testid': 'alert-icon' }),
+  Plus: () => React.createElement('div', { 'data-testid': 'plus-icon' }),
+  Menu: () => React.createElement('div', { 'data-testid': 'menu-icon' }),
+  MessageSquare: () => React.createElement('div', { 'data-testid': 'message-square-icon' }),
+  ChevronDown: () => React.createElement('div', { 'data-testid': 'chevron-down-icon' }),
+  MoreHorizontal: () => React.createElement('div', { 'data-testid': 'more-horizontal-icon' }),
+  Edit2: () => React.createElement('div', { 'data-testid': 'edit2-icon' }),
+  Trash2: () => React.createElement('div', { 'data-testid': 'trash2-icon' }),
+  Search: () => React.createElement('div', { 'data-testid': 'search-icon' }),
 }));
 
 // Mock @/lib/utils

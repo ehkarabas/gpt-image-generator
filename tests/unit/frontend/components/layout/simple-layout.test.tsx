@@ -1,3 +1,38 @@
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { AdaptiveLayout } from '@/components/chat/layouts/adaptive-layout'
+
+vi.mock('@/components/chat/chat-interface', () => ({
+  ChatInterface: () => <div data-testid="chat-interface-mock" />,
+}))
+
+vi.mock('@/hooks/use-conversations', () => ({
+  useConversations: () => ({
+    conversations: [],
+    activeConversation: null,
+    activeConversationId: null,
+    isLoading: false,
+    isCreating: false,
+    createConversation: () => {},
+    switchConversation: () => {},
+    updateConversation: () => {},
+    deleteConversation: () => {},
+    filteredConversations: () => [],
+  }),
+}))
+
+describe('AdaptiveLayout', () => {
+  it('renders sidebar when showSidebar=true and not mobile', () => {
+    render(<AdaptiveLayout showSidebar={true} showDropdown={true} isMobile={false} />)
+    expect(screen.getByTestId('desktop-sidebar')).toBeDefined()
+  })
+
+  it('hides sidebar on mobile by default', () => {
+    render(<AdaptiveLayout showSidebar={true} showDropdown={true} isMobile={true} />)
+    expect(screen.queryByTestId('desktop-sidebar')).toBeNull()
+  })
+})
+
 import React from 'react'
 import { render, screen } from '@testing-library/react'
 import { describe, it, expect } from 'vitest'
