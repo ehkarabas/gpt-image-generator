@@ -91,7 +91,8 @@ export function ConversationItem({ conversation, index }: ConversationItemProps)
           </span>
           <span className="text-xs text-gray-400">•</span>
           <time className={cn('text-xs', isActive ? 'text-blue-600' : 'text-gray-500')} dateTime={conversation.updated_at} data-testid="conversation-timestamp">
-            {new Date(conversation.updated_at).toLocaleString()}
+            {/* Avoid locale-dependent formatting during SSR to prevent hydration mismatches */}
+            {new Date(conversation.updated_at).toISOString().slice(0, 19).replace('T', ' ')}
           </time>
         </div>
       </div>
