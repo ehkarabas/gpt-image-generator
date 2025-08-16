@@ -1,37 +1,45 @@
 # GPT Image Generator
 
-Local-first GPT-4o chat and image generation app. Built on Next.js (App Router), TypeScript, and Supabase. The app:
+Local-first GPT-4o chat and image generation app built with **monorepo architecture**. Built on Next.js (App Router), TypeScript, and Supabase with a dual-configuration Git workflow. The app:
 
-- Streams chat responses via OpenAI Responses API (GPT-4o)
-- Generates images via `gpt-image-1` (image generation/edits)
+- Streams chat responses via OpenAI GPT-4o API  
+- Generates images via DALL-E 3 API (image generation/edits)
 - Persists auth, profiles, conversations, messages, and image metadata in Supabase
 - Stores binary image files in Supabase Storage
-- Uses MCP-backed workflows in Cursor for dev ergonomics (optional)
+- Uses Task Master AI MCP tools for development workflows
+- Follows Test-Driven Development (TDD) with comprehensive testing
+- Implements dual-branch Git strategy for local/production environments
 
 ---
 
 ## Table of Contents
 
 - [About](#about)
-- [Key Features](#key-features)
+- [Key Features](#key-features) 
+- [Project Structure (Monorepo)](#project-structure-monorepo)
+  - [Directory Overview](#directory-overview)
+  - [Path Aliases](#path-aliases)
+- [Git Workflow Strategy](#git-workflow-strategy)
+  - [Branch Structure](#branch-structure)
+  - [Development Flow](#development-flow)
+  - [Commit Standards](#commit-standards)
 - [Architecture](#architecture)
   - [Frontend Stack](#frontend-stack)
   - [Backend Stack](#backend-stack)
   - [Infrastructure & DevOps](#infrastructure--devops)
   - [Database Schema](#database-schema)
   - [API Design](#api-design)
-  - [WebSocket Events](#websocket-events)
+- [Development Guidelines](#development-guidelines)
+  - [TDD Approach](#tdd-approach)
+  - [Task Master AI Workflow](#task-master-ai-workflow)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
   - [Environment Configuration](#environment-configuration)
   - [Local Development](#local-development)
-- [Supabase Migrations](#supabase-migrations)
-- [Dual-Configuration Git Workflow](#dual-configuration-git-workflow)
+- [Testing Strategy](#testing-strategy)
+- [Supabase Setup & Migrations](#supabase-setup--migrations)
 - [Quality & Testing](#quality--testing)
-- [Keep-Alive Strategy](#keep-alive-strategy)
-- [Real-time (Optional)](#real-time-optional)
-- [CI/CD](#cicd)
 - [Security](#security)
 - [Deployment](#deployment)
 - [Success Criteria & KPIs](#success-criteria--kpis)
@@ -70,6 +78,127 @@ GPT Image Generator is a local-first GPT-4o chat and image generation app. It le
 - Supabase Storage for images; metadata in Postgres
 - Supabase Auth for authentication; `profiles` table for user profile data
 - Saved conversations, messages, and images
+
+---
+
+## Project Structure (Monorepo)
+
+This project uses **npm workspaces** to organize code into a clean monorepo structure with separated concerns.
+
+### Directory Overview
+
+```text
+.
+├── frontend/                    # Next.js App Router workspace
+│   ├── app/                     # Routes, layouts, route handlers
+│   │   ├── (dashboard)/         # Main chat interface
+│   │   ├── actions/             # Server Actions  
+│   │   └── api/                 # Route handlers
+│   ├── components/              # Reusable UI components
+│   │   ├── ui/                  # ShadCN/UI primitives
+│   │   ├── chat/                # Chat-specific components
+│   │   ├── images/              # Image-related components
+│   │   └── forms/               # Form components
+│   ├── hooks/                   # React hooks
+│   └── lib/                     # Domain, infra and utilities
+│       ├── db/                  # Database schema & queries
+│       ├── supabase/            # Supabase client utilities
+│       ├── openai/              # OpenAI API integration
+│       └── validations/         # Zod schemas
+├── supabase/                    # Supabase backend
+│   ├── functions/               # Edge Functions
+│   └── migrations/              # SQL migrations
+├── tests/                       # Centralized testing (AT ROOT)
+│   ├── unit/                    # Vitest unit tests
+│   ├── integration/             # API + DB tests
+│   ├── e2e/                     # Playwright E2E tests
+│   └── fixtures/                # Test data
+├── package.json                 # Monorepo root dependencies
+└── frontend/package.json        # Frontend workspace
+```
+
+### Path Aliases
+
+**CRITICAL**: All `@/` path aliases are defined in the root `tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["./frontend/*"],
+      "@/lib/*": ["./frontend/lib/*"],
+      "@/components/*": ["./frontend/components/*"],
+      "@/hooks/*": ["./frontend/hooks/*"],
+      "@/app/*": ["./frontend/app/*"],
+      "@supabase/*": ["./supabase/functions/*"]
+    }
+  }
+}
+```
+
+**Testing Commands** (run from root):
+```bash
+npm run test          # Unit tests (vitest)
+npm run test:e2e      # E2E tests (playwright)  
+npm run test:coverage # Coverage report
+```
+
+---
+
+## Git Workflow Strategy
+
+This project uses a **dual-configuration branch strategy** to manage development and production environments separately.
+
+### Branch Structure
+
+```
+main                 # 🚫 Production deployment (NEVER commit directly)
+├── config/local     # 🔧 Local development (Docker PostgreSQL)
+└── config/remote    # 🌐 Production config (Supabase PostgreSQL)
+```
+
+### Development Flow
+
+1. **Feature Development** (config/local):
+   ```bash
+   git checkout config/local
+   # Develop features with TDD approach
+   npm run test
+   git add .
+   git commit -m "feat(chat): implement real-time messaging"
+   ```
+
+2. **Production Preparation** (config/remote):
+   ```bash
+   git checkout config/remote
+   git merge config/local --no-ff
+   # Adjust production settings
+   git commit -m "config(prod): optimize for production"
+   npm run test:e2e
+   ```
+
+3. **Release** (main):
+   ```bash
+   git checkout main
+   git merge config/remote --no-ff
+   git push origin main
+   ```
+
+### Commit Standards
+
+All commits follow **Conventional Commits** format:
+
+```
+<type>(<scope>): <subject>
+
+Examples:
+feat(chat): add streaming message support
+fix(images): resolve DALL-E rate limiting
+test(ui): add chat input component tests
+docs(readme): update monorepo setup guide
+```
+
+**Commit Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`, `build`
 
 ---
 
@@ -112,6 +241,7 @@ API Pattern (dev): Next.js App Router route handlers (streaming responses)
 // Database & Migrations
 Database: Supabase PostgreSQL (local + production)
 Migrations: Supabase CLI SQL migrations
+Soft Delete: `deleted_at` (and optional `deleted_by`) pattern across tables
 
 // Authentication & Storage
 Auth: Supabase Auth
@@ -130,7 +260,7 @@ Note: In production, OpenAI calls and storage ops can be moved to Supabase Edge 
 # Development Environment
 Local DB: Supabase local stack (Dockerized Postgres) via Supabase CLI
 Services: Supabase Studio, Auth, Storage, Postgres
-Environment: Dual-configuration Git workflow
+Environment: Local (Docker/Supabase) and Remote (Supabase hosted)
 
 # Production Environment
 Frontend: Vercel (App Router)
@@ -140,10 +270,8 @@ CDN: Vercel Edge Network
 Monitoring: Supabase Analytics + Sentry
 
 # CI/CD Pipeline
-Version Control: Git + GitHub
-CI/CD: GitHub Actions
 Testing: Automated E2E, Unit, Integration
-Deployment: Automated via Git workflow
+Deployment: Platform-specific pipeline
 ```
 
 ### Database Schema
@@ -249,29 +377,161 @@ interface WebSocketEvents {
 
 ---
 
+## Development Guidelines
+
+### TDD Approach
+
+This project follows **Test-Driven Development** for all UI components and features:
+
+1. **Write Tests First**: Create comprehensive test files before implementing components
+2. **Implement Feature**: Build the component to pass the tests  
+3. **Run Tests**: Verify implementation with `npm run test`
+4. **Refactor**: Improve code while maintaining test coverage
+
+**Test Structure**:
+```bash
+tests/unit/frontend/components/chat/
+├── chat-input.test.tsx      # ✅ 11 tests passing
+├── generated-image.test.tsx # ✅ 14 tests passing  
+├── message-item.test.tsx    # ✅ 16 tests passing
+└── message-list.test.tsx    # 🔄 Next to implement
+```
+
+### Task Master AI Workflow
+
+Development is managed through **Task Master AI MCP tools** for structured, task-driven development:
+
+- **Task Planning**: Use `parse_prd` to generate tasks from requirements
+- **Task Management**: `get_tasks`, `next_task`, `expand_task` for organization
+- **Implementation Tracking**: `update_subtask` to log progress with timestamps
+- **Quality Assurance**: `set_task_status` to mark completion after testing
+
+### Core Principles
+
+- **React Query v5**: Centralized `QueryClient`, sensible `staleTime`, selective invalidation, optimistic updates for critical mutations
+- **Server Components First**: Fetch on the server; use Client Components only for interactivity. Use Server Actions for mutations
+- **Suspense + Error Boundaries**: Small, purpose-driven boundaries; pair React Query `suspense: true` with boundaries; provide stable skeletons
+- **Database Schema as SSoT**: Keep schema definitions centralized in `frontend/lib/db/schema.ts`; use safe, idempotent SQL migrations
+- **Monorepo Testing**: All tests run from root directory using npm workspaces
+- **Git Workflow Compliance**: Always work on `config/local` branch, follow conventional commits
+
+---
+
 ## Getting Started
 
 ### Prerequisites
 
+**Required Tools:**
 - Node.js 22+
-- npm (or pnpm)
+- npm (monorepo workspace support)
 - Docker & Docker Compose
 - Supabase CLI
+- Git (for dual-branch workflow)
 
+**API Keys:**
+- OpenAI API Key (GPT-4o + DALL-E 3)
+- Anthropic API Key (for Task Master AI)
+
+**Development Tools:**
+- Task Master AI (MCP Tool for Cursor)
+- Cursor IDE (recommended for MCP integration)
+
+**Verification:**
 ```sh
-node --version
-npm -v
-docker --version
+node --version        # v22+
+npm -v               # 10+
+docker --version     # 24+
 docker compose version
 npx supabase --version
+git --version
 ```
 
 ### Installation
 
-```sh
+**1. Clone and Setup Monorepo:**
+```bash
 git clone https://github.com/ehkarabas/gpt-image-generator.git
 cd gpt-image-generator
+
+# Install all workspace dependencies
+npm install
 ```
+
+**2. Git Workflow Setup:**
+```bash
+# Verify you're on the correct branch
+git branch                    # Should show: config/local
+git checkout config/local     # Switch if needed
+
+# Verify branch structure
+git branch -a                 # Should show: config/local, config/remote, main
+```
+
+**3. Task Master AI Setup:**
+
+Configure Task Master AI MCP tools in Cursor:
+
+1. **Install Task Master AI**: Follow [Task Master AI Setup Guide](https://github.com/eyaltoledano/claude-task-master)
+2. **Configure MCP in Cursor**: Add to `.cursor/mcp.json`:
+   ```json
+   {
+     "mcpServers": {
+       "task-master": {
+         "command": "npx",
+         "args": ["task-master-ai", "server"],
+         "env": {
+           "ANTHROPIC_API_KEY": "${ANTHROPIC_API_KEY}"
+         }
+       }
+     }
+   }
+   ```
+
+**4. Verify Monorepo Structure:**
+```bash
+# Check workspace configuration
+npm run test          # Unit tests from root
+npm run test:e2e      # E2E tests from root
+npm run dev           # Frontend development server
+```
+
+### Backend Setup
+
+1. **Install Docker**: Download Docker according to your system [Docker](https://docs.docker.com/get-started/get-docker/)
+
+2. **Install Supabase CLI**: [Supabase CLI Install](https://supabase.com/docs/guides/local-development/cli/getting-started)
+
+3. **Configure OpenAI Keys**: 
+   - In the `supabase/functions/` folder, rename `.env.example` to `.env`
+   - Add your OpenAI API key: [Get OpenAI Keys](http://platform.openai.com/account/)
+
+4. **Start Supabase Local Stack**:
+   ```sh
+   npx supabase start
+   ```
+   Note: If you change your `supabase/functions/.env` file locally, restart with:
+   ```sh
+   npx supabase stop && npx supabase start
+   ```
+
+5. **Update Environment Variables**: After starting Supabase, update your `.env.local` file with the local URLs:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=ey...
+   ```
+
+6. **Serve Edge Functions Locally**:
+   ```sh
+   npx supabase functions serve --import-map ./supabase/functions/import_map.json
+   ```
+
+7. **Test Edge Functions**: Test the `hello-world` edge function:
+   ```sh
+   curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/hello-world' \
+     --header 'Authorization: Bearer SUPABASE_ANON_KEY' \
+     --header 'Content-Type: application/json' \
+     --data '{"name":"Functions"}'
+   ```
 
 ### Environment Configuration
 
@@ -292,7 +552,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY="anon-dev-key"
 Production (`.env.production`):
 
 ```env
-DATABASE_URL="postgresql://postgres.[ref]:[password]@[host].supabase.co:5432/postgres"
+# Supabase Database (connection pooling)
+DATABASE_URL="postgresql://postgres.[ref]:[password]@[host].pooler.supabase.com:5432/postgres?sslmode=require&pgbouncer=true"
+# Direct DB for migrations (optional)
+DIRECT_URL="postgresql://postgres.[ref]:[password]@[host].pooler.supabase.com:6543/postgres"
+
 NEXT_PUBLIC_SUPABASE_URL="https://[ref].supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="[anon-key]"
 NEXT_PUBLIC_API_URL="https://gpt-image-generator-ehkarabas.onrender.com"
@@ -332,66 +596,103 @@ Include appropriate RLS policies in migrations (see Security below).
 
 ---
 
-## Dual-Configuration Git Workflow
+## Testing Strategy
 
-Branch model to separate environment configuration from product code while keeping `main` deployable:
+This project follows **Test-Driven Development (TDD)** with comprehensive testing at all levels.
 
-```
-main                 # Development workbench & deployment branch
-├── config/local     # Local development configuration
-└── config/remote    # Production configuration
-```
+### Test Structure (Monorepo)
 
-Typical flow:
-
-```sh
-git checkout main
-# Switch to local configuration
-# (merge with --no-ff to preserve branch history)
-git merge --no-ff config/local -m 'deploy: Switch to local configuration'
-
-# Switch to remote configuration
-git checkout main
-git merge --no-ff config/remote -m 'deploy: Switch to remote configuration'
-
-# Keep config branches in sync with main
-git checkout config/local
-git merge --no-ff main -m 'chore(config/local): sync with main'
-
-git checkout config/remote
-git merge --no-ff main -m 'chore(config/remote): sync with main'
-
-git checkout main
+```text
+tests/                        # All tests at ROOT level
+├── unit/                     # Vitest unit tests
+│   ├── frontend/             # Frontend component/hook tests
+│   │   ├── components/       # UI component tests
+│   │   │   ├── chat/         # Chat component tests
+│   │   │   └── images/       # Image component tests
+│   │   ├── hooks/            # React hook tests
+│   │   └── lib/              # Utility function tests
+│   └── functions/            # Supabase Edge Function tests
+├── integration/              # API + DB integration tests
+│   ├── frontend-api/         # API endpoint tests
+│   └── supabase-db/          # Database operation tests
+├── e2e/                      # Playwright E2E tests
+│   ├── frontend/             # User workflow tests
+│   └── auth/                 # Authentication flow tests
+└── fixtures/                 # Shared test data
 ```
 
-In Cursor, use the Toolbox wrapper to invoke `git-mcp-server` tools (do not register the server directly due to tool limits). See `docs/personal-notes/gptImageGenerator_comprehensive_prd.md` for full examples.
+### TDD Workflow
+
+1. **Write Test First**:
+   ```bash
+   # Create test file before component
+   tests/unit/frontend/components/chat/new-component.test.tsx
+   ```
+
+2. **Implement Component**:
+   ```bash
+   # Build component to pass tests
+   frontend/components/chat/new-component.tsx
+   ```
+
+3. **Run Tests**:
+   ```bash
+   npm run test                    # Unit tests only
+   npm run test:watch              # Watch mode
+   npm run test:coverage           # With coverage
+   npm run test:e2e                # E2E tests
+   ```
+
+### Current Test Coverage
+
+**Chat Components** (Phase 1):
+- ✅ ChatInput: 11 tests passing
+- ✅ GeneratedImage: 14 tests passing  
+- ✅ MessageItem: 16 tests passing
+- 🔄 MessageList: Next to implement
+- 🔄 ChatInterface: Next to implement
+
+**Test Commands** (run from root):
+```bash
+npm run test                 # All unit tests (vitest)
+npm run test:watch          # Watch mode for development
+npm run test:coverage       # Coverage report
+npm run test:e2e           # E2E tests (playwright)
+npm run test:e2e:ui        # Playwright UI mode
+```
 
 ---
 
 ## Quality & Testing
 
-- Unit tests: Jest + Testing Library
-- E2E: Playwright
-- Type checking: TypeScript
-- Linting: ESLint + Prettier
+**Testing Framework**:
+- **Unit Tests**: Vitest + React Testing Library
+- **E2E Tests**: Playwright (cross-browser)
+- **Linting**: ESLint + Prettier
+- **Type Safety**: TypeScript strict mode
 
-Common commands:
-
-```sh
-npm run type-check
-npm run lint
-npm run test
-npm run test:e2e
+**Quality Commands** (run from root):
+```bash
+npm run lint              # ESLint + Prettier
+npm run type-check        # TypeScript validation
+npm run test              # Unit tests (vitest)
+npm run test:coverage     # Coverage report
+npm run test:e2e          # E2E tests (playwright)
+npm run test:e2e:ui       # Playwright UI mode
 ```
 
-Initial coverage focus:
+**Coverage Focus**:
+- ✅ **Chat Components**: TDD implementation with comprehensive tests
+- 🔄 **API Routes**: Streaming chat flows and image generation endpoints
+- 🔄 **Database Operations**: Conversation, message, and image CRUD
+- 🔄 **Authentication Flows**: Supabase Auth integration
+- 🔄 **Error Boundaries**: Component error handling
 
-- Task board interactions (if UI variants exist)
-- Task CRUD and details
-- Real-time updates and comments
-- Role-based UI behaviors
-
----
+**Quality Gates**:
+- All tests must pass before merging to `config/remote`
+- Code coverage minimum: 80% for critical paths
+- E2E tests required before production deployment
+- Zero TypeScript errors tolerated
 
 ## Keep-Alive Strategy
 
@@ -429,20 +730,6 @@ Optionally poll this from the frontend on a long interval in production.
 ## Real-time (Optional)
 
 WebSocket server and client hooks can be added for assistant token deltas and image job progress. See `docs/personal-notes/gptImageGenerator_comprehensive_prd.md` §5.4 for server and hook examples.
-
----
-
-## CI/CD
-
-GitHub Actions pipeline outline:
-
-- Install deps (root/app)
-- Type-check, lint, unit test
-- Build app
-- E2E with Playwright
-- Deploy (Vercel for frontend; Render/Railway or Supabase Edge Functions for backend if used)
-
-See PRD §6.3 for a complete workflow YAML example.
 
 ---
 
