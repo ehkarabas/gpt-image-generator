@@ -44,7 +44,7 @@ function formatTime(dateString: string): string {
 
 export function MessageItem({ message, index, 'data-testid': dataTestId }: MessageItemProps) {
   const isUser = message.role === 'user'
-  const hasImages = message.images && message.images.length > 0
+  const hasImages = Array.isArray(message.images) && message.images.length > 0
 
   return (
     <div 
@@ -104,7 +104,7 @@ export function MessageItem({ message, index, 'data-testid': dataTestId }: Messa
             className="space-y-3"
             data-testid="message-images"
           >
-            {message.images.map((image, imageIndex) => (
+            {(message.images ?? []).map((image, imageIndex) => (
               <GeneratedImage 
                 key={image.id} 
                 image={image} 
