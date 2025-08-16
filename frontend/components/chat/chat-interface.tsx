@@ -11,9 +11,10 @@ import { cn } from '@/lib/utils'
 
 interface ChatInterfaceProps {
   className?: string
+  wrapWithLayout?: boolean
 }
 
-export function ChatInterface({ className }: ChatInterfaceProps) {
+export function ChatInterface({ className, wrapWithLayout = true }: ChatInterfaceProps) {
   const { 
     messages, 
     sendMessage, 
@@ -44,17 +45,16 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
     clearError()
   }
 
-  return (
-    <SimpleLayout>
-      <div 
-        className={cn(
-          "flex flex-col h-full",
-          className
-        )}
-        role="region"
-        aria-label="Chat interface"
-        data-testid="chat-interface-container"
-      >
+  const content = (
+    <div 
+      className={cn(
+        "flex flex-col h-full",
+        className
+      )}
+      role="region"
+      aria-label="Chat interface"
+      data-testid="chat-interface-container"
+    >
         {/* Connection Status */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
           <div className="flex items-center space-x-2">
@@ -177,7 +177,8 @@ export function ChatInterface({ className }: ChatInterfaceProps) {
         <div className="border-t border-gray-200 bg-white">
           <ChatInput onSend={handleSendMessage} />
         </div>
-      </div>
-    </SimpleLayout>
+    </div>
   )
+
+  return wrapWithLayout ? <SimpleLayout>{content}</SimpleLayout> : content
 }
