@@ -9,9 +9,10 @@ import { cn } from '@/lib/utils'
 
 interface ChatInputProps {
   className?: string
+  onSend?: (message: string) => Promise<void> | void
 }
 
-export function ChatInput({ className }: ChatInputProps) {
+export function ChatInput({ className, onSend }: ChatInputProps) {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { sendMessage, error, clearError, retry } = useMessages()
@@ -26,7 +27,14 @@ export function ChatInput({ className }: ChatInputProps) {
     setIsLoading(true)
     
     try {
-      await sendMessage(message)
+      // Use onSend prop if provided, otherwise use useMessages hook
+      if (onSend) {
+        await onSend(message)
+      } else {
+        await sendMessage(message)
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error)
     } finally {
       setIsLoading(false)
     }

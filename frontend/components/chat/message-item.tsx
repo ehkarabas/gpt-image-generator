@@ -24,6 +24,7 @@ interface MessageItemProps {
     }>
   }
   index: number
+  'data-testid'?: string
 }
 
 function formatTime(dateString: string): string {
@@ -39,7 +40,7 @@ function formatTime(dateString: string): string {
   }
 }
 
-export function MessageItem({ message, index }: MessageItemProps) {
+export function MessageItem({ message, index, 'data-testid': dataTestId }: MessageItemProps) {
   const isUser = message.role === 'user'
   const hasImages = message.images && message.images.length > 0
 
@@ -49,7 +50,7 @@ export function MessageItem({ message, index }: MessageItemProps) {
         "flex gap-4 group",
         isUser ? "flex-row-reverse" : "flex-row"
       )}
-      data-testid={`message-${message.role}`}
+      data-testid={dataTestId || `message-${message.role}`}
       data-message-id={message.id}
       data-message-index={index}
       role="article"
