@@ -324,3 +324,5 @@ describe('useAuth', () => {
     expect(mockFromReturn.insert).toHaveBeenCalled()
   })
 })
+
+
