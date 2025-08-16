@@ -30,11 +30,13 @@ interface MessageItemProps {
 function formatTime(dateString: string): string {
   try {
     const date = new Date(dateString)
-    return date.toLocaleTimeString('en-US', {
+    // Use a stable timezone to avoid SSR/CSR mismatches
+    return new Intl.DateTimeFormat('en-US', {
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true
-    })
+      hour12: true,
+      timeZone: 'UTC',
+    }).format(date)
   } catch {
     return 'Now'
   }

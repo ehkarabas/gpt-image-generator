@@ -29,7 +29,9 @@ export default defineConfig({
       '@/hooks': path.resolve(__dirname, 'frontend/hooks'),
       '@/app': path.resolve(__dirname, 'frontend/app'),
       '@/types': path.resolve(__dirname, 'types'),
-      '@supabase': path.resolve(__dirname, 'supabase/functions')
+      // Do not shadow the official '@supabase/supabase-js' package.
+      // If you need to import local supabase function helpers, import relatively
+      // or add explicit aliases like '@supabase/_lib/*' instead.
     }
   }
 });
