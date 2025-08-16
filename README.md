@@ -43,7 +43,7 @@ Experience GPT Image Generator in action! The application is deployed and ready 
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
-  - [Environment Configuration](#environment-configuration)
+  - [Environment Setup & TDD Compliance](#environment-setup--tdd-compliance)
   - [Local Development](#local-development)
 - [Testing Strategy](#testing-strategy)
 - [Supabase Setup & Migrations](#supabase-setup--migrations)
@@ -634,37 +634,164 @@ npm run dev           # Frontend development server
      --data '{"name":"Functions"}'
    ```
 
-### Environment Configuration
+### Environment Setup & TDD Compliance
 
-Local Development (`.env.local`):
+**CRITICAL**: This project enforces strict TDD compliance for environment configuration. Tests MUST FAIL (never skip) when environment is misconfigured.
 
-```env
-DATABASE_URL="file:./local.db"
-NODE_ENV="development"
-DEPLOYMENT_ENV="local"
-NEXT_PUBLIC_API_URL="http://localhost:3001"
-SOCKET_URL="http://localhost:3001"
+#### Environment File Structure
 
-# Supabase (local stack will inject service URLs; add if you use client SDK locally)
-NEXT_PUBLIC_SUPABASE_URL="http://localhost:54321"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="anon-dev-key"
+```text
+.
+├── .env.local                   # Local development (gitignored)
+├── .env.local.example          # Template for local setup  
+├── .env.production             # Production config (gitignored)
+├── .env.production.example     # Template for production
+└── frontend/
+    ├── .env                    # Active env (auto-copied)
+    ├── .env.local             # Frontend local (auto-copied)
+    └── .env.production        # Frontend prod (auto-copied)
 ```
 
-Production (`.env.production`):
+#### TDD Environment Validation Commands
 
-```env
-# Supabase Database (connection pooling)
-DATABASE_URL="postgresql://postgres.[ref]:[password]@[host].pooler.supabase.com:5432/postgres?sslmode=require&pgbouncer=true"
-# Direct DB for migrations (optional)
-DIRECT_URL="postgresql://postgres.[ref]:[password]@[host].pooler.supabase.com:6543/postgres"
-
-NEXT_PUBLIC_SUPABASE_URL="https://[ref].supabase.co"
-NEXT_PUBLIC_SUPABASE_ANON_KEY="[anon-key]"
-NEXT_PUBLIC_API_URL="https://gpt-image-generator-ehkarabas.onrender.com"
-SOCKET_URL="https://gpt-image-generator-ehkarabas.onrender.com"
-NODE_ENV="production"
-DEPLOYMENT_ENV="remote"
+**🚫 NEVER use these commands (creates false positives)**:
+```bash
+# ❌ FORBIDDEN - No environment validation
+playwright test
+npm run test:e2e
+test.skip(!process.env.VAR, 'Not configured')
 ```
+
+**✅ ALWAYS use these commands (proper TDD validation)**:
+```bash
+# ✅ CORRECT - Validates environment first
+npm run test:e2e:local      # For local development
+npm run test:e2e:remote     # For production validation
+npm run ci:prepare:local    # Manual environment preparation
+```
+
+#### Environment Setup Process
+
+**Step 1: Create Local Environment**
+```bash
+# Copy example files
+cp .env.local.example .env.local
+cp .env.production.example .env.production
+
+# Validate environment setup
+npm run ci:prepare:local
+# ✅ Should show: "Local environment prepared successfully!"
+# ❌ If fails: Fix missing variables and retry
+```
+
+**Step 2: Configure API Keys**
+
+Edit `.env.local` with your actual keys:
+```env
+# Required Keys
+OPENAI_API_KEY=sk-proj-YOUR-KEY-HERE
+ANTHROPIC_API_KEY=sk-ant-api03-YOUR-KEY-HERE
+
+# Supabase Configuration (from supabase start)
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/postgres
+
+# Development Configuration
+DEBUG=false
+DEPLOYMENT_ENV=local
+OPENAI_MODEL_CHAT=gpt-4o
+OPENAI_MODEL_IMAGE=dall-e-3
+```
+
+**Step 3: Test Environment Configuration**
+```bash
+# Verify environment validation works
+npm run test:e2e:local
+# ✅ Should run tests successfully
+# ❌ If fails with env errors: Check your .env.local file
+```
+
+#### Production Environment Setup
+
+Edit `.env.production` with production values:
+```env
+# Required Keys (from secrets)
+OPENAI_API_KEY=${OPENAI_API_KEY_PROD}
+ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY_PROD}
+
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=${SUPABASE_PROJECT_URL}
+NEXT_PUBLIC_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+DATABASE_URL=${SUPABASE_DATABASE_URL}
+
+# Production Configuration
+DEBUG=false
+LOG_LEVEL=warn
+DEPLOYMENT_ENV=remote
+NODE_ENV=production
+
+# Production Settings
+RATE_LIMIT_REQUESTS_CHAT=30
+RATE_LIMIT_REQUESTS_IMAGE=5
+CONTENT_FILTER_LEVEL=high
+```
+
+#### Environment Validation Scripts
+
+The project includes comprehensive validation scripts that ensure TDD compliance:
+
+**scripts/ci/prepare-local.js**: Validates local environment
+- ❌ **FAILS** tests if .env.local missing
+- ❌ **FAILS** tests if required variables missing
+- ✅ **PASSES** only when environment is complete
+
+**scripts/ci/prepare-production.js**: Validates production environment  
+- ❌ **FAILS** tests if .env.production missing
+- ❌ **FAILS** tests if production variables missing
+- ✅ **PASSES** only when production environment is complete
+
+#### Troubleshooting Environment Issues
+
+**Error: ".env.local not found"**
+```bash
+# Solution:
+cp .env.local.example .env.local
+# Edit .env.local with your actual API keys
+npm run ci:prepare:local
+```
+
+**Error: "Missing environment variables"**
+```bash
+# Check which variables are missing:
+npm run ci:prepare:local
+# Add missing variables to .env.local
+# Required: OPENAI_API_KEY, NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
+```
+
+**Error: "E2E tests skipping"**
+```bash
+# This indicates TDD violation - tests should FAIL, not skip
+# Always use proper validation commands:
+npm run test:e2e:local    # Not: playwright test
+npm run test:e2e:remote   # Not: npm run test:e2e
+```
+
+#### Agent/Developer Guidelines
+
+**For AI Agents working on this project**:
+- ✅ **ALWAYS** validate environment before running tests
+- ✅ **ALWAYS** use `npm run ci:prepare:local` before E2E tests
+- ❌ **NEVER** use `test.skip()` for environment issues
+- ❌ **NEVER** proceed when environment validation fails
+
+**For Developers**:
+- Follow the setup process exactly as documented
+- Never commit .env.local or .env.production files
+- Use the validation scripts to ensure proper setup
+- Report environment issues immediately - do not work around them
 
 ### Local Development
 
