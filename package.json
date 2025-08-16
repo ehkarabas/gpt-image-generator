@@ -27,6 +27,12 @@
     "env:remote": "npm run env:remote --workspace=frontend",
     "ai:test": "node scripts/test-openai-connection.js",
     "images:clean": "node scripts/clean-temp-images.js",
+    "ci:prepare:production": "cp .env.production frontend/.env.production && echo 'Production environment copied'",
+    "db:test:remote": "node scripts/test-remote-db-connection.js",
+    "db:migrate:test": "npx supabase migration list && npx supabase db pull && echo 'Migration test completed'",
+    "deploy:verify": "node scripts/verify-deployment.js",
+    "ci:deploy:pipeline": "npm run ci:prepare:production && npm run db:test:remote && npm run db:migrate:test && npm run build:remote && npm run test:e2e:remote",
+    "ci:auto:merge:main": "git checkout main && git merge config/remote --no-ff -m 'deploy: automated CI/CD deployment' && git push origin main",
     "switch:local": "git checkout main && git merge config/local --no-ff -m 'deploy: switch to local configuration'",
     "switch:remote": "git checkout main && git merge config/remote --no-ff -m 'deploy: switch to remote configuration'",
     "sync:configs": "git checkout config/local && git merge main --no-ff && git checkout config/remote && git merge main --no-ff && git checkout main",
@@ -34,7 +40,13 @@
     "supabase:stop": "npx supabase stop",
     "supabase:reset": "npx supabase db reset",
     "supabase:migrate": "npx supabase migration up",
-    "supabase:functions:serve": "npx supabase functions serve --import-map ./supabase/functions/import_map.json"
+    "supabase:functions:serve": "npx supabase functions serve --import-map ./supabase/functions/import_map.json",
+    "ci:prepare:production": "npm run env:remote --workspace=frontend",
+    "db:test:remote": "node scripts/ci/db-test-remote.js",
+    "db:migrate:test": "node scripts/ci/db-migrate-test.js",
+    "deploy:verify": "node scripts/ci/deploy-verify.js",
+    "ci:deploy:pipeline": "npm run ci:prepare:production && npm run db:test:remote && npm run db:migrate:test && npm run build:remote && npm run test:e2e:remote",
+    "ci:auto:merge:main": "node scripts/ci/auto-merge-main.js"
   },
   "keywords": [
     "gpt",

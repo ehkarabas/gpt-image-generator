@@ -157,7 +157,7 @@ main                 # 🚫 Production deployment (NEVER commit directly)
 └── config/remote    # 🌐 Production config (Supabase PostgreSQL)
 ```
 
-### Development Flow
+### CI/CD Development Flow
 
 1. **Feature Development** (config/local):
    ```bash
@@ -168,20 +168,34 @@ main                 # 🚫 Production deployment (NEVER commit directly)
    git commit -m "feat(chat): implement real-time messaging"
    ```
 
-2. **Production Preparation** (config/remote):
+2. **CI/CD Pipeline** (config/remote):
    ```bash
    git checkout config/remote
    git merge config/local --no-ff
-   # Adjust production settings
+   
+   # Automated CI/CD pipeline execution
+   npm run ci:deploy:pipeline
+   # - Copies .env.production to frontend
+   # - Tests remote database connection
+   # - Validates database migrations
+   # - Builds production frontend
+   # - Runs E2E tests with production config
+   
+   # Manual production optimizations
    git commit -m "config(prod): optimize for production"
-   npm run test:e2e
+   git push origin config/remote
    ```
 
-3. **Release** (main):
+3. **Automated Deployment** (main):
    ```bash
-   git checkout main
-   git merge config/remote --no-ff
-   git push origin main
+   # Automated via CI/CD pipeline
+   npm run ci:auto:merge:main
+   # - Merges config/remote to main
+   # - Pushes to main (triggers Vercel deployment)
+   # - Runs post-deployment verification
+   
+   # Return to development cycle
+   git checkout config/local
    ```
 
 ### Commit Standards
@@ -199,6 +213,85 @@ docs(readme): update monorepo setup guide
 ```
 
 **Commit Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `ci`, `build`
+
+---
+
+## CI/CD Pipeline
+
+This project implements a comprehensive CI/CD pipeline for seamless development-to-production deployment.
+
+### Pipeline Overview
+
+```mermaid
+graph LR
+    A[config/local] -->|Development| B[Unit Tests]
+    B --> C[Feature Complete]
+    C --> D[config/remote]
+    D --> E[CI/CD Pipeline]
+    E --> F[Production Tests]
+    F --> G[main branch]
+    G --> H[Vercel Deployment]
+    H --> I[Health Checks]
+```
+
+### CI/CD Scripts
+
+**Core Pipeline Commands:**
+```bash
+# Full CI/CD pipeline execution
+npm run ci:deploy:pipeline
+
+# Individual pipeline steps
+npm run ci:prepare:production    # Copy .env.production
+npm run db:test:remote          # Test remote database
+npm run db:migrate:test         # Validate migrations
+npm run deploy:verify           # Post-deployment checks
+
+# Automated deployment
+npm run ci:auto:merge:main      # Merge and deploy to main
+```
+
+**Pipeline Features:**
+- **Environment Isolation**: Automatic .env.production copying
+- **Database Validation**: Remote connection and migration testing
+- **Comprehensive Testing**: Unit, integration, and E2E tests
+- **Automated Deployment**: GitHub hook triggers for Vercel
+- **Health Monitoring**: Post-deployment verification
+- **Rollback Support**: Emergency rollback procedures
+
+### Pipeline Stages
+
+1. **Development Phase** (config/local)
+   - Local development with Docker/Supabase
+   - Unit tests with Vitest
+   - TDD implementation cycle
+
+2. **CI/CD Pipeline** (config/remote)
+   - Environment configuration copying
+   - Remote database connectivity testing
+   - Schema migration validation
+   - Production build verification
+   - E2E testing with production config
+
+3. **Automated Deployment** (main)
+   - Automatic merge from config/remote
+   - Vercel GitHub hook deployment
+   - Live health checks and verification
+   - Service monitoring and alerting
+
+### Error Handling & Rollback
+
+```bash
+# Emergency rollback
+git checkout main
+git revert HEAD --no-edit
+git push origin main
+
+# Targeted rollback
+git checkout config/remote
+git reset --hard <previous-hash>
+git push --force-with-lease origin config/remote
+```
 
 ---
 
