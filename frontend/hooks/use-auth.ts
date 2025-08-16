@@ -223,7 +223,14 @@ export function useAuth(): UseAuthReturn {
 				.single()
 
 			if (error) {
-				setError(error as AuthError)
+				// Normalize PostgrestError to AuthError-like shape for state
+				const normalized = {
+					name: 'PostgrestError',
+					message: (error as any)?.message || 'Profile update error',
+					status: 400,
+					__isAuthError: true,
+				} as unknown as AuthError
+				setError(normalized)
 				return
 			}
 
