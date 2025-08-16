@@ -12,7 +12,7 @@ const fromReturn = {
 }
 
 vi.mock('@/lib/supabase/client', () => ({
-  default: {
+  supabase: {
     auth: {
       getUser: vi.fn(),
       getSession: vi.fn(),
@@ -27,7 +27,7 @@ vi.mock('@/lib/supabase/client', () => ({
 }))
 
 import { useAuth } from '@/hooks/use-auth'
-import supabase from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase/client'
 
 // Get the mocked functions
 const mockAuth = supabase.auth as any

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
-import supabase from '@/lib/supabase/client'
+import { supabase } from '@/lib/supabase/client'
 
 export interface Profile {
 	user_id: string
@@ -18,7 +18,7 @@ export interface UseAuthReturn {
 	profile: Profile | null
 	isLoading: boolean
 	isAuthenticated: boolean
-	error: AuthError | null
+	error: Error | null
 	signIn: (email: string, password: string) => Promise<void>
 	signUp: (email: string, password: string, metadata?: Record<string, any>) => Promise<void>
 	signInWithOAuth: (provider: 'google' | 'github' | 'discord') => Promise<void>
@@ -32,7 +32,7 @@ export function useAuth(): UseAuthReturn {
 	const [session, setSession] = useState<Session | null>(null)
 	const [profile, setProfile] = useState<Profile | null>(null)
 	const [isLoading, setIsLoading] = useState(true)
-	const [error, setError] = useState<AuthError | null>(null)
+	const [error, setError] = useState<Error | null>(null)
 
 	const isAuthenticated = !!user && !!session
 
@@ -223,7 +223,7 @@ export function useAuth(): UseAuthReturn {
 				.single()
 
 			if (error) {
-				setError(error as AuthError)
+				setError(error)
 				return
 			}
 

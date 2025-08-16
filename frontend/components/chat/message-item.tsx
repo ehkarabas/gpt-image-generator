@@ -104,7 +104,7 @@ export function MessageItem({ message, index, 'data-testid': dataTestId }: Messa
             className="space-y-3"
             data-testid="message-images"
           >
-            {message.images.map((image, imageIndex) => (
+            {message.images?.map((image, imageIndex) => (
               <GeneratedImage 
                 key={image.id} 
                 image={image} 

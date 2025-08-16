@@ -1,10 +1,10 @@
 {
-  "name": "taskmaster-frontend",
+  "name": "gpt-image-generator-frontend",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "dev:local": "next dev",
+    "dev:local": "dotenv -e .env -- next dev",
     "build": "next build",
     "build:local": "npm run env:local && npm run build",
     "build:remote": "npm run env:remote && npm run build",

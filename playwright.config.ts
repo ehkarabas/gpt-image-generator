@@ -1,3 +1,13 @@
+import dotenv from 'dotenv';
+// dotenv is a Node.js module, it only works via import/require in code.
+// However, we're using the dotenv command via CLI (in the root package.json scripts), which is a different thing — in this case, a CLI tool like dotenv-cli is required.
+// dotenv -e .env -- next dev -> For this line to work, the dotenv command must be available in the terminal.
+// npm install -D dotenv-cli
+
+// Load environment variables for tests
+dotenv.config({ path: './frontend/.env.local' });
+dotenv.config({ path: './frontend/.env' });
+
 import { defineConfig, devices } from '@playwright/test';
 
 /**
@@ -18,7 +28,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:3000',
+    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -65,7 +75,9 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm run dev:local',
-    url: 'http://localhost:3000',
+    // command: 'npx dotenv -e .env -- next dev',
+    url: 'http://localhost:3002',
+    cwd: 'frontend',
     reuseExistingServer: !process.env.CI,
   },
 });
