@@ -1,12 +1,15 @@
 import dotenv from 'dotenv';
-// dotenv is a Node.js module, it only works via import/require in code.
-// However, we're using the dotenv command via CLI (in the root package.json scripts), which is a different thing — in this case, a CLI tool like dotenv-cli is required.
-// dotenv -e .env -- next dev -> For this line to work, the dotenv command must be available in the terminal.
-// npm install -D dotenv-cli
 
-// Load environment variables for tests
-dotenv.config({ path: './frontend/.env.local' });
-dotenv.config({ path: './frontend/.env' });
+// Load environment variables based on deployment environment
+const deploymentEnv = process.env.DEPLOYMENT_ENV || 'local';
+const envPath = deploymentEnv === 'remote' 
+  ? './frontend/.env.production'
+  : './frontend/.env.local';
+
+// Load appropriate environment file
+dotenv.config({ path: envPath });
+// Ensure the prepared .env (copied by CI scripts) has final precedence
+dotenv.config({ path: './frontend/.env', override: true });
 
 import { defineConfig, devices } from '@playwright/test';
 
@@ -73,11 +76,10 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run dev:local',
-    // command: 'npx dotenv -e .env -- next dev',
-    url: 'http://localhost:3002',
-    cwd: 'frontend',
-    reuseExistingServer: !process.env.CI,
-  },
+  // webServer: (process.env.DEPLOYMENT_ENV === 'remote' || process.env.E2E_BASE_URL?.includes('vercel.app')) ? undefined : {
+  //   command: 'npm run dev:local',
+  //   url: 'http://localhost:3003',
+  //   cwd: 'frontend',
+  //   reuseExistingServer: !process.env.CI,
+  // },
 });
