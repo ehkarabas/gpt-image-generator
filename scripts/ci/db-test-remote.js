@@ -49,7 +49,7 @@ async function testRemoteDatabase() {
     // Test 3: Try to access a public table or create a test connection
     console.log('📋 Test 3: Database schema access test');
     const { data: schemaData, error: schemaError } = await supabase
-      .from('users')
+      .from('profiles')
       .select('count')
       .limit(1);
 

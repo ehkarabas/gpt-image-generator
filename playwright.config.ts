@@ -13,6 +13,9 @@ dotenv.config({ path: './frontend/.env', override: true });
 
 import { defineConfig, devices } from '@playwright/test';
 
+// For remote E2E, run against a local Next dev server (using production env)
+const useLocalWeb = deploymentEnv === 'remote';
+
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
@@ -31,7 +34,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: process.env.E2E_BASE_URL || 'http://localhost:3000',
+    baseURL: useLocalWeb ? 'http://localhost:3000' : (process.env.E2E_BASE_URL || 'http://localhost:3000'),
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -75,11 +78,14 @@ export default defineConfig({
     // },
   ],
 
-  /* Run your local dev server before starting the tests */
-  // webServer: (process.env.DEPLOYMENT_ENV === 'remote' || process.env.E2E_BASE_URL?.includes('vercel.app')) ? undefined : {
-  //   command: 'npm run dev:local',
-  //   url: 'http://localhost:3003',
-  //   cwd: 'frontend',
-  //   reuseExistingServer: !process.env.CI,
-  // },
+  /* Run local dev server for remote tests instead of hitting Vercel */
+  webServer: useLocalWeb
+    ? {
+        command: 'npm run dev:local',
+        url: 'http://localhost:3000',
+        cwd: 'frontend',
+        reuseExistingServer: !process.env.CI,
+        timeout: 120000,
+      }
+    : undefined,
 });

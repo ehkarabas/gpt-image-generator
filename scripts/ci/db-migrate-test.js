@@ -26,7 +26,7 @@ async function testDatabaseMigrations() {
     console.log('📋 Test 1: Schema validation');
     
     // Check required tables exist
-    const requiredTables = ['users', 'images', 'conversations', 'messages'];
+    const requiredTables = ['profiles', 'images', 'conversations', 'messages'];
     
     for (const table of requiredTables) {
       console.log(`🔍 Checking table: ${table}`);
@@ -49,8 +49,8 @@ async function testDatabaseMigrations() {
     
     // Test permissions (will fail if not properly configured, which is fine for testing)
     const { data: permData, error: permError } = await supabase
-      .from('users')
-      .insert({ email: 'test@example.com' })
+      .from('profiles')
+      .insert({ id: '00000000-0000-0000-0000-000000000000', email: 'test@example.com' })
       .select();
     
     if (permError) {
@@ -58,7 +58,7 @@ async function testDatabaseMigrations() {
     } else {
       console.log('ℹ️  Permission test: Basic insert capability confirmed');
       // Clean up test data if insert succeeded
-      await supabase.from('users').delete().eq('email', 'test@example.com');
+      await supabase.from('profiles').delete().eq('email', 'test@example.com');
     }
 
     console.log('✅ Database migration test completed');
