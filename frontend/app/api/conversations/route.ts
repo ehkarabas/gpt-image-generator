@@ -33,6 +33,7 @@ function adminClient() {
     auth: { autoRefreshToken: false, persistSession: false },
   })
 }
+
 function getUserIdFromJwt(token: string): string | null {
   try {
     const payloadPart = token.split('.')[1]
@@ -59,46 +60,117 @@ function getEmailFromJwt(token: string): string | null {
 export async function POST(req: NextRequest) {
   const token = await getToken(req)
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  
   const supa = adminClient()
   const userId = getUserIdFromJwt(token)
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  
   const jwtEmail = getEmailFromJwt(token)
 
   const body = await req.json().catch(() => ({} as any))
   const title = (body?.title?.toString()?.trim() || 'New Conversation').slice(0, 200)
 
-  // Ensure profile exists; try upsert once from JWT, then fallback to admin lookup on retry
-  const ensureProfile = async () => {
+  try {
+    // Step 1: Determine email
     let email = jwtEmail
     if (!email) {
       try {
         const adminRes: any = await (supa as any).auth.admin.getUserById(userId)
-        email = adminRes?.data?.user?.email ?? null
-      } catch {
-        email = null
+        email = adminRes?.data?.user?.email
+      } catch {}
+    }
+    if (!email) {
+      email = `user-${userId.slice(0, 8)}@generated.local`
+    }
+    
+    console.log(`[API] Processing request for user ${userId} with email ${email}`)
+    
+    // Step 2: Ensure profile exists with upsert (always do this, don't check first)
+    const profileData = {
+      id: userId,
+      email,
+      display_name: email.split('@')[0],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+    
+    console.log(`[API] Upserting profile...`)
+    const { error: upsertError } = await supa
+      .from('profiles')
+      .upsert(profileData, {
+        onConflict: 'id',
+        ignoreDuplicates: false // Force update
+      })
+    
+    if (upsertError) {
+      console.error(`[API] Profile upsert error:`, upsertError)
+      // Don't return error here, continue to conversation creation
+    }
+    
+    // Step 3: Small delay to ensure database consistency
+    await new Promise(r => setTimeout(r, 100))
+    
+    // Step 4: Create conversation with multiple retry attempts
+    console.log(`[API] Creating conversation...`)
+    let lastError: any = null
+    let conversation = null
+    
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const { data, error } = await supa
+        .from('conversations')
+        .insert({
+          title,
+          user_id: userId,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+      
+      if (!error && data) {
+        console.log(`[API] Conversation created successfully on attempt ${attempt + 1}`)
+        conversation = data
+        break
       }
+      
+      lastError = error
+      console.log(`[API] Attempt ${attempt + 1} failed: ${error?.message}`)
+      
+      // If it's a foreign key error, retry profile creation
+      if (error?.message?.includes('violates foreign key constraint')) {
+        console.log(`[API] Retrying profile upsert...`)
+        await supa
+          .from('profiles')
+          .upsert(profileData, {
+            onConflict: 'id',
+            ignoreDuplicates: false
+          })
+      }
+      
+      // Exponential backoff
+      const delay = Math.min(100 * Math.pow(2, attempt), 2000)
+      await new Promise(r => setTimeout(r, delay))
     }
-    if (!email) email = `${userId}@noemail.local`
-    await supa.from('profiles').upsert({ id: userId, email }, { onConflict: 'id' })
-  }
-  await ensureProfile()
-
-  for (let attempt = 0; attempt < 60; attempt++) {
-    const { data, error } = await supa
-      .from('conversations')
-      .insert({ title, user_id: userId })
-      .select()
-      .single()
-    if (!error) return NextResponse.json(data)
-    if (!/foreign key|profiles/.test(error.message)) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    
+    if (!conversation) {
+      console.error(`[API] Failed to create conversation after all attempts:`, lastError)
+      return NextResponse.json({ 
+        error: lastError?.message || 'Failed to create conversation',
+        details: lastError
+      }, { status: 500 })
     }
-    // FK failure: race with trigger; re-upsert profile and backoff
-    await ensureProfile()
-    await new Promise((r) => setTimeout(r, 300))
+    
+    return NextResponse.json(conversation)
+    
+  } catch (err: any) {
+    console.error(`[API] Unexpected error:`, err)
+    return NextResponse.json({ 
+      error: err.message || 'Internal server error',
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    }, { status: 500 })
   }
-  return NextResponse.json({ error: 'Profile not ready' }, { status: 500 })
 }
+
 export async function GET(req: NextRequest) {
   const token = await getToken(req)
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

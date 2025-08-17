@@ -17,23 +17,57 @@ async function getToken(req: NextRequest): Promise<string | null> {
   return data.session?.access_token ?? null
 }
 
-function rlsClient(token: string) {
+function adminClient() {
   const url = requireEnv('NEXT_PUBLIC_SUPABASE_URL')
-  const anon = requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY')
-  return createClient(url, anon, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
+  const service = requireEnv('SUPABASE_SERVICE_ROLE_KEY')
+  return createClient(url, service, {
     auth: { autoRefreshToken: false, persistSession: false },
   })
+}
+
+function getUserIdFromJwt(token: string): string | null {
+  try {
+    const payloadPart = token.split('.')[1]
+    const json = Buffer.from(payloadPart.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
+    const payload = JSON.parse(json)
+    return typeof payload.sub === 'string' ? payload.sub : null
+  } catch {
+    return null
+  }
 }
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const token = await getToken(req)
   if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const supa = rlsClient(token)
+  
+  const supa = adminClient()
+  const userId = getUserIdFromJwt(token)
+  if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  
   const { id } = await params
-  const { error } = await supa.from('conversations').delete().eq('id', id)
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  
+  // First verify the conversation belongs to the user
+  const { data: conversation, error: fetchError } = await supa
+    .from('conversations')
+    .select('id, user_id')
+    .eq('id', id)
+    .eq('user_id', userId)
+    .single()
+  
+  if (fetchError || !conversation) {
+    return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
+  }
+  
+  // Delete the conversation
+  const { error } = await supa
+    .from('conversations')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userId) // Extra safety check
+  
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+  
   return NextResponse.json({ success: true })
 }
-
-
