@@ -93,10 +93,10 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
 
     return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('[ACTIONS POST] Error:', err)
     return NextResponse.json({ 
-      error: err.message || 'Internal server error'
+      error: err instanceof Error ? err.message : 'Internal server error'
     }, { status: 500 })
   }
 }
