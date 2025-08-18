@@ -30,7 +30,7 @@ describe('TypeScript Schema Validation', () => {
         email: testProfile.email,
         display_name: testProfile.displayName,
         avatar_url: testProfile.avatar,
-        preferences: testProfile.preferences,
+        preferences: testProfile.preferences as any,
         created_at: testProfile.createdAt.toISOString(),
         updated_at: testProfile.updatedAt.toISOString(),
         deleted_at: testProfile.deletedAt?.toISOString() || null
@@ -95,7 +95,7 @@ describe('TypeScript Schema Validation', () => {
         conversation_id: testMessage.conversationId,
         content: testMessage.content,
         role: testMessage.role,
-        metadata: testMessage.metadata,
+        metadata: testMessage.metadata as any,
         created_at: testMessage.createdAt.toISOString(),
         updated_at: testMessage.updatedAt.toISOString(),
         deleted_at: testMessage.deletedAt?.toISOString() || null

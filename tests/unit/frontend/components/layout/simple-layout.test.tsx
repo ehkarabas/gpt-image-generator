@@ -1,6 +1,8 @@
+import React from 'react'
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { AdaptiveLayout } from '@/components/chat/layouts/adaptive-layout'
+import { SimpleLayout } from '@/components/layout/simple-layout'
 
 vi.mock('@/components/chat/chat-interface', () => ({
   ChatInterface: () => <div data-testid="chat-interface-mock" />,
@@ -32,11 +34,6 @@ describe('AdaptiveLayout', () => {
     expect(screen.queryByTestId('desktop-sidebar')).toBeNull()
   })
 })
-
-import React from 'react'
-import { render, screen } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
-import { SimpleLayout } from '@/components/layout/simple-layout'
 
 describe('SimpleLayout', () => {
   it('renders layout container with proper test id', () => {

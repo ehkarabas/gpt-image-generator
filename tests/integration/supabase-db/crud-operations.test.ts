@@ -154,8 +154,8 @@ describe('Database CRUD Operations', () => {
       expect(error).toBeNull()
       expect(data).toBeDefined()
       expect(Array.isArray(data)).toBe(true)
-      expect(data.length).toBeGreaterThan(0)
-      expect(data[0].user_id).toBe(testUserId)
+      expect(data!.length).toBeGreaterThan(0)
+      expect(data![0].user_id).toBe(testUserId)
     })
 
     it('should update a conversation', async () => {
@@ -223,8 +223,8 @@ describe('Database CRUD Operations', () => {
       expect(error).toBeNull()
       expect(data).toBeDefined()
       expect(Array.isArray(data)).toBe(true)
-      expect(data.length).toBeGreaterThan(0)
-      expect(data[0].conversation_id).toBe(testConversationId)
+      expect(data!.length).toBeGreaterThan(0)
+      expect(data![0].conversation_id).toBe(testConversationId)
     })
 
     it('should update a message', async () => {
@@ -317,8 +317,8 @@ describe('Database CRUD Operations', () => {
       expect(error).toBeNull()
       expect(data).toBeDefined()
       expect(Array.isArray(data)).toBe(true)
-      expect(data.length).toBeGreaterThan(0)
-      expect(data[0].user_id).toBe(testUserId)
+      expect(data!.length).toBeGreaterThan(0)
+      expect(data![0].user_id).toBe(testUserId)
     })
 
     it('should update an image', async () => {

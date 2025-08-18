@@ -127,7 +127,7 @@ describe('ChatInterface', () => {
   })
 
   it('renders error state when there is an error', () => {
-    mockUseMessages.error = { message: 'Connection failed' }
+    (mockUseMessages as any).error = { message: 'Connection failed' }
     
     render(<ChatInterface />)
     
@@ -136,7 +136,7 @@ describe('ChatInterface', () => {
   })
 
   it('renders retry button when there is an error', () => {
-    mockUseMessages.error = { message: 'Connection failed' }
+    (mockUseMessages as any).error = { message: 'Connection failed' }
     
     render(<ChatInterface />)
     
@@ -144,7 +144,7 @@ describe('ChatInterface', () => {
   })
 
   it('handles retry action correctly', async () => {
-    mockUseMessages.error = { message: 'Connection failed' }
+    (mockUseMessages as any).error = { message: 'Connection failed' }
     
     render(<ChatInterface />)
     
@@ -157,7 +157,7 @@ describe('ChatInterface', () => {
   })
 
   it('clears error when dismiss button is clicked', async () => {
-    mockUseMessages.error = { message: 'Connection failed' }
+    (mockUseMessages as any).error = { message: 'Connection failed' }
     
     render(<ChatInterface />)
     

@@ -270,7 +270,7 @@ describe('useAuth', () => {
   })
 
   it('handles auth state changes correctly', async () => {
-    mockAuth.onAuthStateChange.mockImplementation((callback) => {
+    mockAuth.onAuthStateChange.mockImplementation((callback: any) => {
       return { data: { subscription: { unsubscribe: vi.fn() } } }
     })
 
