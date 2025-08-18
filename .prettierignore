@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+.next/
+.vercel/
+.nuxt/
+
+# Environment files
+.env
+.env.*
+
+# Cache and temp files
+.cache/
+*.log
+*.tgz
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Supabase
+supabase/.branches/
+supabase/.temp/
+
+# Playwright
+test-results/
+playwright-report/

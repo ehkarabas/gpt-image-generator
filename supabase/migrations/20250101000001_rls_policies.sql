@@ -1,13 +1,42 @@
--- Foreign keys
-alter table public.conversations
-  add constraint conversations_user_fk foreign key (user_id) references public.profiles(id) on delete cascade;
-
-alter table public.messages
-  add constraint messages_conversation_fk foreign key (conversation_id) references public.conversations(id) on delete cascade;
-
-alter table public.images
-  add constraint images_user_fk foreign key (user_id) references public.profiles(id) on delete cascade,
-  add constraint images_message_fk foreign key (message_id) references public.messages(id) on delete set null;
+-- Foreign keys with IF NOT EXISTS checks
+DO $$
+BEGIN
+  -- Check and add conversations_user_fk if not exists
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'conversations_user_fk'
+  ) THEN
+    ALTER TABLE public.conversations
+      ADD CONSTRAINT conversations_user_fk 
+      FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+  END IF;
+  
+  -- Check and add messages_conversation_fk if not exists
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'messages_conversation_fk'
+  ) THEN
+    ALTER TABLE public.messages
+      ADD CONSTRAINT messages_conversation_fk 
+      FOREIGN KEY (conversation_id) REFERENCES public.conversations(id) ON DELETE CASCADE;
+  END IF;
+  
+  -- Check and add images_user_fk if not exists
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'images_user_fk'
+  ) THEN
+    ALTER TABLE public.images
+      ADD CONSTRAINT images_user_fk 
+      FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+  END IF;
+  
+  -- Check and add images_message_fk if not exists
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'images_message_fk'
+  ) THEN
+    ALTER TABLE public.images
+      ADD CONSTRAINT images_message_fk 
+      FOREIGN KEY (message_id) REFERENCES public.messages(id) ON DELETE SET NULL;
+  END IF;
+END $$;
 
 -- RLS enable
 alter table public.profiles enable row level security;
@@ -107,8 +136,8 @@ language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.profiles (id, email, display_name, avatar_url, created_at, updated_at)
-  values (new.id, new.email, new.raw_user_meta_data->>'display_name', new.raw_user_meta_data->>'avatar_url', now(), now())
+  insert into public.profiles (id, email, display_name, created_at, updated_at)
+  values (new.id, new.email, coalesce(new.raw_user_meta_data->>'display_name', 'User'), now(), now())
   on conflict (id) do nothing;
   return new;
 end;
@@ -118,5 +147,3 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
-
-

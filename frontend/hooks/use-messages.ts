@@ -1,80 +1,80 @@
-import { useState } from 'react'
+import { useState } from "react";
 
 export interface Message {
-  id: string
-  content: string
-  role: 'user' | 'assistant'
-  created_at: string
+  id: string;
+  content: string;
+  role: "user" | "assistant";
+  created_at: string;
   user?: {
-    display_name?: string
-    avatar_url?: string
-  }
-  images?: any[]
+    display_name?: string;
+    avatar_url?: string;
+  };
+  images?: any[];
 }
 
 export interface UseMessagesReturn {
-  messages: Message[]
-  sendMessage: (content: string) => Promise<void>
-  error: { message: string } | null
-  clearError: () => void
-  retry: () => void
-  loadMoreMessages: () => void
-  hasMore: boolean
-  isLoading: boolean
+  messages: Message[];
+  sendMessage: (content: string) => Promise<void>;
+  error: { message: string } | null;
+  clearError: () => void;
+  retry: () => void;
+  loadMoreMessages: () => void;
+  hasMore: boolean;
+  isLoading: boolean;
 }
 
 export function useMessages(): UseMessagesReturn {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [error, setError] = useState<{ message: string } | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [hasMore] = useState(false)
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [error, setError] = useState<{ message: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasMore] = useState(false);
 
   const sendMessage = async (content: string) => {
     try {
-      setError(null)
-      setIsLoading(true)
-      
+      setError(null);
+      setIsLoading(true);
+
       // Add user message optimistically
       const userMessage: Message = {
         id: `user-${Date.now()}`,
         content,
-        role: 'user',
+        role: "user",
         created_at: new Date().toISOString(),
-      }
-      
-      setMessages(prev => [...prev, userMessage])
-      
+      };
+
+      setMessages((prev) => [...prev, userMessage]);
+
       // TODO: Implement actual API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Add assistant response
       const assistantMessage: Message = {
         id: `assistant-${Date.now()}`,
-        content: 'This is a placeholder response.',
-        role: 'assistant',
+        content: "This is a placeholder response.",
+        role: "assistant",
         created_at: new Date().toISOString(),
-      }
-      
-      setMessages(prev => [...prev, assistantMessage])
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (err) {
-      setError({ message: 'Failed to send message' })
+      setError({ message: "Failed to send message" });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const clearError = () => {
-    setError(null)
-  }
+    setError(null);
+  };
 
   const retry = () => {
     // TODO: Implement retry logic
-    clearError()
-  }
+    clearError();
+  };
 
   const loadMoreMessages = () => {
     // TODO: Implement load more logic
-  }
+  };
 
   return {
     messages,
@@ -85,11 +85,5 @@ export function useMessages(): UseMessagesReturn {
     loadMoreMessages,
     hasMore,
     isLoading,
-  }
+  };
 }
-
-
-
-
-
-

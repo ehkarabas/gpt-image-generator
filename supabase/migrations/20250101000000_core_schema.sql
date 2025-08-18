@@ -2,7 +2,7 @@
 
 -- Profiles (extends auth.users)
 create table if not exists public.profiles (
-  id uuid primary key,
+  id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
   display_name text,
   avatar_url text,

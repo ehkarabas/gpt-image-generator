@@ -3,6 +3,7 @@
 // This enables autocomplete, go to definition, etc.
 
 // Setup type definitions for built-in Supabase Runtime APIs
+/// <reference types="https://esm.sh/@supabase/functions-js/src/edge-runtime.d.ts" />
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "@supabase/supabase-js";
 
@@ -25,7 +26,7 @@ const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 
 console.log("Hello from Functions!");
 
-Deno.serve(async (req) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   const corsResponse = handleCors(req);
   if (corsResponse) return corsResponse;

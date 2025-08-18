@@ -1,17 +1,21 @@
-'use client'
+"use client";
 
-import { Button } from '@/components/ui/button'
-import { Menu } from 'lucide-react'
-import { ConversationDropdown } from '@/components/chat/conversation-dropdown'
+import { Button } from "@/components/ui/button";
+import { Menu } from "lucide-react";
+import { ConversationDropdown } from "@/components/chat/conversation-dropdown";
 
 interface AdaptiveHeaderProps {
-  showDropdown: boolean
-  showSidebar: boolean
-  isMobile: boolean
-  onMobileMenuClick: () => void
+  showDropdown: boolean;
+  showSidebar: boolean;
+  isMobile: boolean;
+  onMobileMenuClick: () => void;
 }
 
-export function AdaptiveHeader({ showDropdown, isMobile, onMobileMenuClick }: AdaptiveHeaderProps) {
+export function AdaptiveHeader({
+  showDropdown,
+  isMobile,
+  onMobileMenuClick,
+}: AdaptiveHeaderProps) {
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4 shrink-0">
       <div className="max-w-3xl mx-auto flex justify-between items-center">
@@ -40,12 +44,14 @@ export function AdaptiveHeader({ showDropdown, isMobile, onMobileMenuClick }: Ad
           )}
         </div>
 
-        <Button variant="outline" size="sm" className="text-gray-600 hover:text-gray-900">
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-gray-600 hover:text-gray-900"
+        >
           New Chat
         </Button>
       </div>
     </header>
-  )
+  );
 }
-
-

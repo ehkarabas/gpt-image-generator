@@ -1,18 +1,22 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { ConversationSidebar } from '@/components/chat/conversation-sidebar'
-import { AdaptiveHeader } from '@/components/chat/adaptive-header'
-import { ChatInterface } from '@/components/chat/chat-interface'
+import { useState } from "react";
+import { ConversationSidebar } from "@/components/chat/conversation-sidebar";
+import { AdaptiveHeader } from "@/components/chat/adaptive-header";
+import { ChatInterface } from "@/components/chat/chat-interface";
 
 interface AdaptiveLayoutProps {
-  showSidebar: boolean
-  showDropdown: boolean
-  isMobile: boolean
+  showSidebar: boolean;
+  showDropdown: boolean;
+  isMobile: boolean;
 }
 
-export function AdaptiveLayout({ showSidebar, showDropdown, isMobile }: AdaptiveLayoutProps) {
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+export function AdaptiveLayout({
+  showSidebar,
+  showDropdown,
+  isMobile,
+}: AdaptiveLayoutProps) {
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   return (
     <div
@@ -54,7 +58,10 @@ export function AdaptiveLayout({ showSidebar, showDropdown, isMobile }: Adaptive
         </div>
       )}
 
-      <main className="flex-1 flex flex-col min-w-0" data-testid="chat-main-adaptive">
+      <main
+        className="flex-1 flex flex-col min-w-0"
+        data-testid="chat-main-adaptive"
+      >
         <AdaptiveHeader
           showDropdown={showDropdown}
           showSidebar={showSidebar}
@@ -70,7 +77,5 @@ export function AdaptiveLayout({ showSidebar, showDropdown, isMobile }: Adaptive
         </div>
       </main>
     </div>
-  )
+  );
 }
-
-
