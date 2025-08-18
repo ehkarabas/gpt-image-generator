@@ -84,8 +84,13 @@ export default defineConfig({
         command: 'npm run dev:local',
         url: 'http://localhost:3000',
         cwd: 'frontend',
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: true, // Always reuse if available
         timeout: 120000,
+        env: {
+          ...process.env,
+          DEPLOYMENT_ENV: 'remote',
+          NODE_ENV: 'development'
+        },
       }
     : undefined,
 });

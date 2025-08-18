@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "dev:local": "dotenv -e .env -- next dev",
+    "dev:local": "cross-env NEXT_DISABLE_TURBOPACK=1 dotenv -e .env -- next dev",
     "build": "next build",
     "build:local": "npm run env:local && npm run build",
     "build:remote": "npm run env:remote && npm run build",
@@ -43,6 +43,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.21",
+    "cross-env": "^10.0.0",
     "dotenv": "^17.2.1",
     "drizzle-kit": "^0.31.4",
     "drizzle-orm": "^0.44.4",

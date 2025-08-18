@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
   const title = (body?.title?.toString()?.trim() || 'New Conversation').slice(0, 200)
 
   try {
-    // Step 1: Determine email
+    // Determine email
     let email = jwtEmail
     if (!email) {
       try {
@@ -83,84 +83,85 @@ export async function POST(req: NextRequest) {
       email = `user-${userId.slice(0, 8)}@generated.local`
     }
     
-    console.log(`[API] Processing request for user ${userId} with email ${email}`)
+    console.log(`[API] Creating conversation for user ${userId} with atomic function`)
     
-    // Step 2: Ensure profile exists with upsert (always do this, don't check first)
-    const profileData = {
-      id: userId,
-      email,
-      display_name: email.split('@')[0],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
+    // Use the atomic function to create both profile and conversation in a transaction
+    const { data, error } = await supa.rpc('create_conversation_with_profile', {
+      p_user_id: userId,
+      p_email: email,
+      p_title: title,
+      p_display_name: email.split('@')[0]
+    })
     
-    console.log(`[API] Upserting profile...`)
-    const { error: upsertError } = await supa
-      .from('profiles')
-      .upsert(profileData, {
-        onConflict: 'id',
-        ignoreDuplicates: false // Force update
-      })
-    
-    if (upsertError) {
-      console.error(`[API] Profile upsert error:`, upsertError)
-      // Don't return error here, continue to conversation creation
-    }
-    
-    // Step 3: Small delay to ensure database consistency
-    await new Promise(r => setTimeout(r, 100))
-    
-    // Step 4: Create conversation with multiple retry attempts
-    console.log(`[API] Creating conversation...`)
-    let lastError: any = null
-    let conversation = null
-    
-    for (let attempt = 0; attempt < 10; attempt++) {
-      const { data, error } = await supa
-        .from('conversations')
-        .insert({
-          title,
-          user_id: userId,
+    if (error) {
+      console.error(`[API] Atomic creation error:`, error)
+      
+      // Fallback: Try direct creation with retries
+      console.log(`[API] Falling back to direct creation with retries`)
+      
+      // First ensure profile exists
+      await supa
+        .from('profiles')
+        .upsert({
+          id: userId,
+          email,
+          display_name: email.split('@')[0],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id',
+          ignoreDuplicates: false
         })
-        .select()
-        .single()
       
-      if (!error && data) {
-        console.log(`[API] Conversation created successfully on attempt ${attempt + 1}`)
-        conversation = data
-        break
-      }
+      // Wait a bit for consistency
+      await new Promise(r => setTimeout(r, 500))
       
-      lastError = error
-      console.log(`[API] Attempt ${attempt + 1} failed: ${error?.message}`)
+      // Try to create conversation with retries
+      let lastError: any = null
+      let conversation = null
       
-      // If it's a foreign key error, retry profile creation
-      if (error?.message?.includes('violates foreign key constraint')) {
-        console.log(`[API] Retrying profile upsert...`)
-        await supa
-          .from('profiles')
-          .upsert(profileData, {
-            onConflict: 'id',
-            ignoreDuplicates: false
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const { data: conv, error: convError } = await supa
+          .from('conversations')
+          .insert({
+            title,
+            user_id: userId,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           })
+          .select()
+          .single()
+        
+        if (!convError && conv) {
+          conversation = conv
+          break
+        }
+        
+        lastError = convError
+        console.log(`[API] Attempt ${attempt + 1} failed: ${convError?.message}`)
+        
+        // Exponential backoff
+        await new Promise(r => setTimeout(r, Math.min(200 * Math.pow(2, attempt), 2000)))
       }
       
-      // Exponential backoff
-      const delay = Math.min(100 * Math.pow(2, attempt), 2000)
-      await new Promise(r => setTimeout(r, delay))
+      if (!conversation) {
+        return NextResponse.json({ 
+          error: lastError?.message || 'Failed to create conversation',
+          details: lastError
+        }, { status: 500 })
+      }
+      
+      return NextResponse.json(conversation)
     }
     
-    if (!conversation) {
-      console.error(`[API] Failed to create conversation after all attempts:`, lastError)
+    if (!data) {
       return NextResponse.json({ 
-        error: lastError?.message || 'Failed to create conversation',
-        details: lastError
+        error: 'No conversation data returned'
       }, { status: 500 })
     }
     
-    return NextResponse.json(conversation)
+    console.log(`[API] Conversation created successfully via atomic function`)
+    return NextResponse.json(data)
     
   } catch (err: any) {
     console.error(`[API] Unexpected error:`, err)
@@ -193,3 +194,5 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ data: data ?? [], count: count ?? 0 })
 }
+
+

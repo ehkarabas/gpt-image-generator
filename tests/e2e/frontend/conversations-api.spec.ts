@@ -155,9 +155,9 @@ test.describe('Conversations API', () => {
       }
     }
     
-    // Step 4: Wait for database consistency
+    // Step 4: Wait for database consistency (reduced since we use atomic function now)
     console.log('Waiting for database consistency...')
-    await new Promise(r => setTimeout(r, 3000))
+    await new Promise(r => setTimeout(r, 1000))
     
     // Step 5: Make API requests
     const api = await pwRequest.newContext({ baseURL })
@@ -206,20 +206,21 @@ test.describe('Conversations API', () => {
     expect(listJson.data.some((c: any) => c.id === created.id)).toBe(true)
     console.log(`Found ${listJson.data.length} conversations`)
     
-    // Delete conversation
+    // Delete conversation (using POST with action parameter due to Next.js 15 routing issues)
     console.log('Deleting conversation...')
-    const delRes = await api.delete(`/api/conversations/${created.id}`, { 
+    const delRes = await api.post(`/api/conversations/${created.id}/actions`, { 
+      data: { action: 'delete' },
       headers,
       timeout: 30000 
     })
     
     const delText = await delRes.text()
-    console.log(`DELETE response status: ${delRes.status()}`)
+    console.log(`Delete (via POST) response status: ${delRes.status()}`)
     if (delRes.status() !== 200) {
-      console.log('DELETE response body:', delText)
+      console.log('Delete (via POST) response body:', delText)
     }
     
-    expect(delRes.status(), `DELETE failed: ${delText}`).toBe(200)
+    expect(delRes.status(), `Delete (via POST) failed: ${delText}`).toBe(200)
     
     const delJson = JSON.parse(delText)
     expect(delJson?.success).toBe(true)

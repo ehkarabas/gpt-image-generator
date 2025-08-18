@@ -38,19 +38,12 @@ function getUserIdFromJwt(token: string): string | null {
   }
 }
 
-// GET Method
-export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const params = await context.params
-  const id = params.id
-  return NextResponse.json({ message: `GET conversation ${id}` })
-}
-
-// POST Method - Main handler for Next.js 15 workaround
+// POST Method - Actions handler
 export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const params = await context.params
   const id = params.id
 
-  console.log('[POST] Route handler called for conversation:', id)
+  console.log('[ACTIONS POST] Route handler called for conversation:', id)
 
   try {
     const token = await getToken(request)
@@ -64,12 +57,12 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
     }
 
     const body = await request.json()
-    const { action, title } = body
+    const { action } = body
     const supa = adminClient()
 
     // DELETE action handler
     if (action === 'delete') {
-      console.log(`[POST DELETE] Deleting conversation ${id} for user ${userId}`)
+      console.log(`[ACTIONS POST DELETE] Deleting conversation ${id} for user ${userId}`)
 
       const { data: conversation, error: fetchError } = await supa
         .from('conversations')
@@ -79,7 +72,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         .single()
 
       if (fetchError || !conversation) {
-        console.log('[POST DELETE] Conversation not found:', fetchError?.message)
+        console.log('[ACTIONS POST DELETE] Conversation not found:', fetchError?.message)
         return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
       }
 
@@ -90,42 +83,18 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
         .eq('user_id', userId)
 
       if (error) {
-        console.log('[POST DELETE] Database error:', error.message)
+        console.log('[ACTIONS POST DELETE] Database error:', error.message)
         return NextResponse.json({ error: error.message }, { status: 500 })
       }
 
-      console.log(`[POST DELETE] Successfully deleted conversation ${id}`)
+      console.log(`[ACTIONS POST DELETE] Successfully deleted conversation ${id}`)
       return NextResponse.json({ success: true })
     }
 
-    // UPDATE action handler
-    if (!title) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
-    }
-
-    const { data, error } = await supa
-      .from('conversations')
-      .update({ 
-        title,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select()
-      .single()
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    if (!data) {
-      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
-    }
-
-    return NextResponse.json(data)
+    return NextResponse.json({ error: 'Unknown action' }, { status: 400 })
 
   } catch (err: any) {
-    console.error('[POST] Error:', err)
+    console.error('[ACTIONS POST] Error:', err)
     return NextResponse.json({ 
       error: err.message || 'Internal server error'
     }, { status: 500 })
