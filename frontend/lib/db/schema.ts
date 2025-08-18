@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, uuid, jsonb, varchar } from 'drizzle-orm/pg-core'
+import { pgTable, text, timestamp, integer, uuid, jsonb, varchar } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
 // Base timestamps mixin

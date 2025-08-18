@@ -105,7 +105,7 @@ export function GeneratedImage({ image, index }: GeneratedImageProps) {
           className="text-sm text-gray-700 line-clamp-2"
           data-testid="image-description"
         >
-          Here's the image you requested based on: "{image.prompt}".
+          Here&apos;s the image you requested based on: &quot;{image.prompt}&quot;.
         </p>
         
         {downloadError && (

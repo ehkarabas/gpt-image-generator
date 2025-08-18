@@ -154,9 +154,9 @@ export function ChatInterface({ className, wrapWithLayout = true }: ChatInterfac
               <div className="text-sm text-gray-400">
                 <p>Try asking:</p>
                 <ul className="mt-2 space-y-1">
-                  <li>• "Generate an image of a sunset over mountains"</li>
-                  <li>• "What can you help me with?"</li>
-                  <li>• "Create a logo for my startup"</li>
+                  <li>• &quot;Generate an image of a sunset over mountains&quot;</li>
+                  <li>• &quot;What can you help me with?&quot;</li>
+                  <li>• &quot;Create a logo for my startup&quot;</li>
                 </ul>
               </div>
             </div>

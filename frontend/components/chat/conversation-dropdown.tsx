@@ -36,6 +36,7 @@ export function ConversationDropdown() {
               <button
                 key={conversation.id}
                 role="option"
+                aria-selected={false}
                 onClick={() => {
                   switchConversation(conversation.id)
                   setOpen(false)

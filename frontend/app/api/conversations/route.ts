@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   const userId = userInfo?.user?.id
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await req.json().catch(() => ({} as any))
+  const body = await req.json().catch(() => ({} as Record<string, unknown>))
   const title = (body?.title?.toString()?.trim() || 'New Conversation').slice(0, 200)
 
   const { data, error } = await supa

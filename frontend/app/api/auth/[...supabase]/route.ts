@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   // This endpoint is used by Supabase for auth callbacks (sign in/up, magic links, OAuth)
   // The auth-helpers library reads/writes cookies to persist the session.
-  const supabase = createRouteHandlerClient({ cookies })
+  const _supabase = createRouteHandlerClient({ cookies })
   const { event, session } = await request.json().catch(() => ({ event: null, session: null }))
 
   if (event === 'SIGNED_IN' && session) {
