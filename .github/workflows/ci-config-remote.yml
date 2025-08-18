@@ -135,7 +135,10 @@ jobs:
           npm run ci:prepare:production
 
       - name: "Build Production Application"
-        run: npm run build:remote
+        run: |
+          # Copy .env.production to frontend directory for build
+          cp .env.production frontend/.env.production
+          npm run build:remote
 
       - name: "Validate Production Build"
         run: |
@@ -277,6 +280,10 @@ jobs:
       - name: "Bundle Analysis"
         run: |
           # Analyze production bundle size
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL_PROD }}" > .env.production
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY_PROD }}" >> .env.production
+          echo "NODE_ENV=production" >> .env.production
+          cp .env.production frontend/.env.production
           npm run build:remote
           echo "✅ Bundle analysis completed"
 
