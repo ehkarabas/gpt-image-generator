@@ -1,133 +1,43 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { createClient } from '@supabase/supabase-js'
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
-
-export const dynamic = 'force-dynamic'
+import { NextRequest, NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { createClient } from "@supabase/supabase-js";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 
 function requireEnv(key: string): string {
-  const v = process.env[key]
-  if (!v) throw new Error(`Missing environment variable: ${key}`)
-  return v
+  const v = process.env[key];
+  if (!v) throw new Error(`Missing environment variable: ${key}`);
+  return v;
 }
 
 async function getToken(req: NextRequest): Promise<string | null> {
-  const h = req.headers.get('authorization') || req.headers.get('Authorization')
-  if (h && h.toLowerCase().startsWith('bearer ')) return h.slice(7).trim()
-  const supabase = createRouteHandlerClient({ cookies })
-  const { data } = await supabase.auth.getSession()
-  return data.session?.access_token ?? null
+  const h =
+    req.headers.get("authorization") || req.headers.get("Authorization");
+  if (h && h.toLowerCase().startsWith("bearer ")) return h.slice(7).trim();
+  const supabase = createRouteHandlerClient({ cookies });
+  const { data } = await supabase.auth.getSession();
+  return data.session?.access_token ?? null;
 }
 
-function adminClient() {
-  const url = requireEnv('NEXT_PUBLIC_SUPABASE_URL')
-  const service = requireEnv('SUPABASE_SERVICE_ROLE_KEY')
-  return createClient(url, service, {
+function rlsClient(token: string) {
+  const url = requireEnv("NEXT_PUBLIC_SUPABASE_URL");
+  const anon = requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  return createClient(url, anon, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { autoRefreshToken: false, persistSession: false },
-  })
+  });
 }
 
-function getUserIdFromJwt(token: string): string | null {
-  try {
-    const payloadPart = token.split('.')[1]
-    const json = Buffer.from(payloadPart.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString('utf8')
-    const payload = JSON.parse(json)
-    return typeof payload.sub === 'string' ? payload.sub : null
-  } catch {
-    return null
-  }
-}
-
-// GET Method
-export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const params = await context.params
-  const id = params.id
-  return NextResponse.json({ message: `GET conversation ${id}` })
-}
-
-// POST Method - Main handler for Next.js 15 workaround
-export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
-  const params = await context.params
-  const id = params.id
-
-  console.log('[POST] Route handler called for conversation:', id)
-
-  try {
-    const token = await getToken(request)
-    if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const userId = getUserIdFromJwt(token)
-    if (!userId) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
-    }
-
-    const body = await request.json()
-    const { action, title } = body
-    const supa = adminClient()
-
-    // DELETE action handler
-    if (action === 'delete') {
-      console.log(`[POST DELETE] Deleting conversation ${id} for user ${userId}`)
-
-      const { data: conversation, error: fetchError } = await supa
-        .from('conversations')
-        .select('id, user_id')
-        .eq('id', id)
-        .eq('user_id', userId)
-        .single()
-
-      if (fetchError || !conversation) {
-        console.log('[POST DELETE] Conversation not found:', fetchError?.message)
-        return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
-      }
-
-      const { error } = await supa
-        .from('conversations')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', userId)
-
-      if (error) {
-        console.log('[POST DELETE] Database error:', error.message)
-        return NextResponse.json({ error: error.message }, { status: 500 })
-      }
-
-      console.log(`[POST DELETE] Successfully deleted conversation ${id}`)
-      return NextResponse.json({ success: true })
-    }
-
-    // UPDATE action handler
-    if (!title) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 })
-    }
-
-    const { data, error } = await supa
-      .from('conversations')
-      .update({ 
-        title,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', id)
-      .eq('user_id', userId)
-      .select()
-      .single()
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    if (!data) {
-      return NextResponse.json({ error: 'Conversation not found' }, { status: 404 })
-    }
-
-    return NextResponse.json(data)
-
-  } catch (err: any) {
-    console.error('[POST] Error:', err)
-    return NextResponse.json({ 
-      error: err.message || 'Internal server error'
-    }, { status: 500 })
-  }
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const token = await getToken(req);
+  if (!token)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const supa = rlsClient(token);
+  const { id } = await params;
+  const { error } = await supa.from("conversations").delete().eq("id", id);
+  if (error)
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ success: true });
 }

@@ -1,47 +1,47 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Download, ExternalLink } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Download, ExternalLink } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface GeneratedImageProps {
   image: {
-    id: string
-    image_url: string
-    prompt: string
-    size: string
-    quality?: string
-    model?: string
-  }
-  index: number
+    id: string;
+    image_url: string;
+    prompt: string;
+    size: string;
+    quality?: string;
+    model?: string;
+  };
+  index: number;
 }
 
 export function GeneratedImage({ image, index }: GeneratedImageProps) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [downloadError, setDownloadError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const handleDownload = async () => {
     try {
-      setDownloadError(null)
-      const response = await fetch(image.image_url)
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `generated-image-${image.id}.png`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
+      setDownloadError(null);
+      const response = await fetch(image.image_url);
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `generated-image-${image.id}.png`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     } catch (error) {
-      console.error('Download failed:', error)
-      setDownloadError('Download failed. Please try again.')
+      console.error("Download failed:", error);
+      setDownloadError("Download failed. Please try again.");
     }
-  }
+  };
 
   return (
-    <div 
+    <div
       className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm group"
       data-testid="generated-image"
       data-image-id={image.id}
@@ -54,23 +54,23 @@ export function GeneratedImage({ image, index }: GeneratedImageProps) {
           alt={image.prompt}
           className={cn(
             "w-full h-auto transition-opacity duration-300",
-            isLoading ? "opacity-0" : "opacity-100"
+            isLoading ? "opacity-0" : "opacity-100",
           )}
           onLoad={() => setIsLoading(false)}
           onError={() => setIsLoading(false)}
           data-testid="generated-image-img"
         />
-        
+
         {isLoading && (
-          <div 
+          <div
             className="absolute inset-0 bg-gray-100 animate-pulse rounded-t-lg"
             data-testid="image-loading-placeholder"
             aria-label="Image loading"
           />
         )}
-        
+
         {/* Action buttons overlay */}
-        <div 
+        <div
           className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
           data-testid="image-actions"
         >
@@ -89,7 +89,7 @@ export function GeneratedImage({ image, index }: GeneratedImageProps) {
               size="sm"
               variant="secondary"
               className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
-              onClick={() => window.open(image.image_url, '_blank')}
+              onClick={() => window.open(image.image_url, "_blank")}
               data-testid="open-image-button"
               aria-label="Open image in new tab"
             >
@@ -98,18 +98,19 @@ export function GeneratedImage({ image, index }: GeneratedImageProps) {
           </div>
         </div>
       </div>
-      
+
       {/* Image info */}
       <div className="p-3 space-y-2">
-        <p 
+        <p
           className="text-sm text-gray-700 line-clamp-2"
           data-testid="image-description"
         >
-          Here's the image you requested based on: "{image.prompt}".
+          Here&apos;s the image you requested based on: &quot;{image.prompt}
+          &quot;.
         </p>
-        
+
         {downloadError && (
-          <p 
+          <p
             className="text-xs text-red-600"
             data-testid="download-error"
             role="alert"
@@ -117,15 +118,15 @@ export function GeneratedImage({ image, index }: GeneratedImageProps) {
             {downloadError}
           </p>
         )}
-        
+
         <div className="flex items-center justify-between">
-          <span 
+          <span
             className="text-xs text-gray-500"
             data-testid="image-attribution"
           >
             Image generated by GPT-image-1
           </span>
-          <div 
+          <div
             className="flex gap-1 text-xs text-gray-500"
             data-testid="image-metadata"
           >
@@ -140,5 +141,5 @@ export function GeneratedImage({ image, index }: GeneratedImageProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

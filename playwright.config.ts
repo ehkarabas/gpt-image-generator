@@ -1,26 +1,20 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
+// dotenv is a Node.js module, it only works via import/require in code.
+// However, we're using the dotenv command via CLI (in the root package.json scripts), which is a different thing — in this case, a CLI tool like dotenv-cli is required.
+// dotenv -e .env -- next dev -> For this line to work, the dotenv command must be available in the terminal.
+// npm install -D dotenv-cli
 
-// Load environment variables based on deployment environment
-const deploymentEnv = process.env.DEPLOYMENT_ENV || 'local';
-const envPath = deploymentEnv === 'remote' 
-  ? './frontend/.env.production'
-  : './frontend/.env.local';
+// Load environment variables for tests
+dotenv.config({ path: "./frontend/.env.local" });
+dotenv.config({ path: "./frontend/.env" });
 
-// Load appropriate environment file
-dotenv.config({ path: envPath });
-// Ensure the prepared .env (copied by CI scripts) has final precedence
-dotenv.config({ path: './frontend/.env', override: true });
-
-import { defineConfig, devices } from '@playwright/test';
-
-// For remote E2E, run against a local Next dev server (using production env)
-const useLocalWeb = deploymentEnv === 'remote';
+import { defineConfig, devices } from "@playwright/test";
 
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
-  testDir: './tests/e2e',
+  testDir: "./tests/e2e",
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -30,31 +24,31 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: "html",
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: useLocalWeb ? 'http://localhost:3000' : (process.env.E2E_BASE_URL || 'http://localhost:3000'),
+    baseURL: "http://localhost:3000",
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+    trace: "on-first-retry",
   },
 
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
     },
 
     {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
     },
 
     {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
     },
 
     /* Test against mobile viewports. */
@@ -78,19 +72,11 @@ export default defineConfig({
     // },
   ],
 
-  /* Run local dev server for remote tests instead of hitting Vercel */
-  webServer: useLocalWeb
-    ? {
-        command: 'npm run dev:local',
-        url: 'http://localhost:3000',
-        cwd: 'frontend',
-        reuseExistingServer: true, // Always reuse if available
-        timeout: 120000,
-        env: {
-          ...process.env,
-          DEPLOYMENT_ENV: 'remote',
-          NODE_ENV: 'development'
-        },
-      }
-    : undefined,
+  /* Run production server for ALL E2E tests */
+  webServer: {
+    command: "npm run start",
+    url: "http://localhost:3000",
+    cwd: "frontend",
+    reuseExistingServer: !process.env.CI,
+  },
 });
