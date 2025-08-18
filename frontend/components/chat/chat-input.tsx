@@ -1,78 +1,75 @@
-'use client'
+"use client";
 
-import { useState, useRef, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
-import { Send, Loader2 } from 'lucide-react'
-import { useMessages } from '@/hooks/use-messages'
-import { cn } from '@/lib/utils'
+import { useState, useRef, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Send, Loader2 } from "lucide-react";
+import { useMessages } from "@/hooks/use-messages";
+import { cn } from "@/lib/utils";
 
 interface ChatInputProps {
-  className?: string
-  onSend?: (message: string) => Promise<void> | void
+  className?: string;
+  onSend?: (message: string) => Promise<void> | void;
 }
 
 export function ChatInput({ className, onSend }: ChatInputProps) {
-  const [input, setInput] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const { sendMessage, error, clearError, retry } = useMessages()
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { sendMessage, error, clearError, retry } = useMessages();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim() || isLoading) return
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
 
-    const message = input.trim()
-    setInput('')
-    setIsLoading(true)
-    
+    const message = input.trim();
+    setInput("");
+    setIsLoading(true);
+
     try {
       // Use onSend prop if provided, otherwise use useMessages hook
       if (onSend) {
-        await onSend(message)
+        await onSend(message);
       } else {
-        await sendMessage(message)
+        await sendMessage(message);
       }
     } catch (error) {
-      console.error('Failed to send message:', error)
+      console.error("Failed to send message:", error);
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSubmit(e)
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(e);
     }
-  }
+  };
 
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
-  }, [input])
+  }, [input]);
 
   return (
-    <div 
+    <div
       className={cn("border-t border-gray-200 bg-white", className)}
       data-testid="chat-input-container"
     >
       <div className="max-w-3xl mx-auto p-6">
         {/* Error Display */}
         {error && (
-          <div 
+          <div
             className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"
             data-testid="chat-error"
             role="alert"
             aria-live="polite"
           >
             <div className="flex items-center justify-between">
-              <p 
-                className="text-sm text-red-600"
-                data-testid="error-message"
-              >
+              <p className="text-sm text-red-600" data-testid="error-message">
                 {error.message}
               </p>
               <div className="flex gap-2">
@@ -102,8 +99,8 @@ export function ChatInput({ className, onSend }: ChatInputProps) {
         )}
 
         {/* Input Form */}
-        <form 
-          onSubmit={handleSubmit} 
+        <form
+          onSubmit={handleSubmit}
           className="flex gap-3 items-end"
           data-testid="chat-form"
         >
@@ -120,8 +117,8 @@ export function ChatInput({ className, onSend }: ChatInputProps) {
               aria-label="Chat message"
               aria-describedby="character-count"
             />
-            
-            <div 
+
+            <div
               className="absolute bottom-2 right-2 text-xs text-gray-400"
               id="character-count"
               data-testid="character-count"
@@ -130,9 +127,9 @@ export function ChatInput({ className, onSend }: ChatInputProps) {
               {input.length}/2000
             </div>
           </div>
-          
-          <Button 
-            type="submit" 
+
+          <Button
+            type="submit"
             disabled={!input.trim() || isLoading}
             className="h-11 px-4 rounded-xl bg-black hover:bg-gray-800 text-white"
             data-testid="send-button"
@@ -152,11 +149,5 @@ export function ChatInput({ className, onSend }: ChatInputProps) {
         </form>
       </div>
     </div>
-  )
+  );
 }
-
-
-
-
-
-

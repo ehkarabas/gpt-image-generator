@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     console.error("API route error:", error);
     return NextResponse.json(
       { error: "Internal server error", details: String(error) },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

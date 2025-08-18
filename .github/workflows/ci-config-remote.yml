@@ -1,34 +1,34 @@
-name: 'CI/CD: Config/Remote Production Preparation'
+name: "CI/CD: Config/Remote Production Preparation"
 
 on:
   push:
-    branches: ['config/remote']
+    branches: ["config/remote"]
   pull_request:
-    branches: ['config/remote']
+    branches: ["config/remote"]
 
 env:
-  NODE_VERSION: '22'
-  DEPLOYMENT_ENV: 'remote'
+  NODE_VERSION: "22"
+  DEPLOYMENT_ENV: "remote"
 
 jobs:
   # Production Environment Validation - CRITICAL FIRST STEP
   production-environment-validation:
-    name: 'Production Environment Validation'
+    name: "Production Environment Validation"
     runs-on: ubuntu-latest
     steps:
-      - name: 'Checkout Repository'
+      - name: "Checkout Repository"
         uses: actions/checkout@v4
 
-      - name: 'Setup Node.js'
+      - name: "Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
-      - name: 'Install Dependencies'
+      - name: "Install Dependencies"
         run: npm ci
 
-      - name: 'Create Production Environment (TDD Enforcement)'
+      - name: "Create Production Environment (TDD Enforcement)"
         run: |
           # TDD ENFORCEMENT: Create .env.production from secrets
           echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL_PROD }}" > .env.production
@@ -42,13 +42,13 @@ jobs:
           echo "DEBUG=false" >> .env.production
           echo "LOG_LEVEL=warn" >> .env.production
 
-      - name: 'Validate Production Environment (TDD Compliance)'
+      - name: "Validate Production Environment (TDD Compliance)"
         run: |
           # CRITICAL: This step MUST FAIL if production environment is not proper
           npm run ci:prepare:production
           echo "✅ Production environment validation passed - TDD compliance verified"
 
-      - name: 'Verify Production Files Created'
+      - name: "Verify Production Files Created"
         run: |
           # TDD ENFORCEMENT: Verify all required production files
           if [ ! -f "frontend/.env" ]; then
@@ -60,23 +60,23 @@ jobs:
 
   # Remote Database Connectivity Test
   database-validation:
-    name: 'Production Database Validation'
+    name: "Production Database Validation"
     runs-on: ubuntu-latest
     needs: production-environment-validation
     steps:
-      - name: 'Checkout Repository'
+      - name: "Checkout Repository"
         uses: actions/checkout@v4
 
-      - name: 'Setup Node.js'
+      - name: "Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
-      - name: 'Install Dependencies'
+      - name: "Install Dependencies"
         run: npm ci
 
-      - name: 'Setup Production Environment'
+      - name: "Setup Production Environment"
         run: |
           echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL_PROD }}" > .env.production
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY_PROD }}" >> .env.production
@@ -84,19 +84,19 @@ jobs:
           echo "DATABASE_URL=${{ secrets.DATABASE_URL_PROD }}" >> .env.production
           npm run ci:prepare:production
 
-      - name: 'Test Remote Database Connection'
+      - name: "Test Remote Database Connection"
         run: |
           # Test production database connectivity
           npm run db:test:remote
           echo "✅ Production database connectivity verified"
 
-      - name: 'Validate Database Schema'
+      - name: "Validate Database Schema"
         run: |
           # Test database migrations and schema
           npm run db:migrate:test
           echo "✅ Database schema validation completed"
 
-      - name: 'Test Database Operations'
+      - name: "Test Database Operations"
         run: |
           # Run integration tests against production database
           npm run test:integration
@@ -104,23 +104,23 @@ jobs:
 
   # Production Build Validation
   production-build:
-    name: 'Production Build Validation'
+    name: "Production Build Validation"
     runs-on: ubuntu-latest
     needs: [production-environment-validation, database-validation]
     steps:
-      - name: 'Checkout Repository'
+      - name: "Checkout Repository"
         uses: actions/checkout@v4
 
-      - name: 'Setup Node.js'
+      - name: "Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
-      - name: 'Install Dependencies'
+      - name: "Install Dependencies"
         run: npm ci
 
-      - name: 'Setup Production Environment'
+      - name: "Setup Production Environment"
         run: |
           echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL_PROD }}" > .env.production
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY_PROD }}" >> .env.production
@@ -128,25 +128,25 @@ jobs:
           echo "NODE_ENV=production" >> .env.production
           npm run ci:prepare:production
 
-      - name: 'Build Production Application'
+      - name: "Build Production Application"
         run: npm run build:remote
 
-      - name: 'Validate Production Build'
+      - name: "Validate Production Build"
         run: |
           if [ ! -d "frontend/.next" ]; then
             echo "❌ Production build failed: .next directory not found"
             exit 1
           fi
-          
+
           # Check for build optimization
           if [ ! -f "frontend/.next/BUILD_ID" ]; then
             echo "❌ Production build incomplete: BUILD_ID not found"
             exit 1
           fi
-          
+
           echo "✅ Production build validation successful"
 
-      - name: 'Upload Build Artifacts'
+      - name: "Upload Build Artifacts"
         uses: actions/upload-artifact@v4
         with:
           name: production-build
@@ -155,23 +155,23 @@ jobs:
 
   # E2E Tests with Production Configuration - MANDATORY
   e2e-production-tests:
-    name: 'E2E Tests (Production Config) - MANDATORY'
+    name: "E2E Tests (Production Config) - MANDATORY"
     runs-on: ubuntu-latest
     needs: [production-environment-validation, database-validation]
     steps:
-      - name: 'Checkout Repository'
+      - name: "Checkout Repository"
         uses: actions/checkout@v4
 
-      - name: 'Setup Node.js'
+      - name: "Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
-      - name: 'Install Dependencies'
+      - name: "Install Dependencies"
         run: npm ci
 
-      - name: 'Setup Production Environment for E2E'
+      - name: "Setup Production Environment for E2E"
         run: |
           echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.SUPABASE_URL_PROD }}" > .env.production
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY_PROD }}" >> .env.production
@@ -180,17 +180,17 @@ jobs:
           echo "NODE_ENV=production" >> .env.production
           npm run ci:prepare:production
 
-      - name: 'Install Playwright Browsers'
+      - name: "Install Playwright Browsers"
         run: npx playwright install --with-deps
 
-      - name: 'Run E2E Tests with Production Config (MANDATORY)'
+      - name: "Run E2E Tests with Production Config (MANDATORY)"
         run: |
           # CRITICAL: E2E tests with production configuration
           # These tests MUST pass before any deployment to main
           npm run test:e2e:remote
           echo "✅ Production E2E tests passed - safe for deployment"
 
-      - name: 'Upload E2E Test Results'
+      - name: "Upload E2E Test Results"
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -202,35 +202,35 @@ jobs:
 
   # AI Services Validation
   ai-services-validation:
-    name: 'AI Services Integration Test'
+    name: "AI Services Integration Test"
     runs-on: ubuntu-latest
     needs: production-environment-validation
     steps:
-      - name: 'Checkout Repository'
+      - name: "Checkout Repository"
         uses: actions/checkout@v4
 
-      - name: 'Setup Node.js'
+      - name: "Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
-      - name: 'Install Dependencies'
+      - name: "Install Dependencies"
         run: npm ci
 
-      - name: 'Setup Production Environment'
+      - name: "Setup Production Environment"
         run: |
           echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY_PROD }}" > .env.production
           echo "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }}" >> .env.production
           npm run ci:prepare:production
 
-      - name: 'Test OpenAI API Connectivity'
+      - name: "Test OpenAI API Connectivity"
         run: |
           # Test production OpenAI API connection
           npm run ai:test
           echo "✅ AI services connectivity verified"
 
-      - name: 'Test Image Generation Pipeline'
+      - name: "Test Image Generation Pipeline"
         run: |
           # Test image generation with production keys
           # This ensures DALL-E integration works in production
@@ -240,35 +240,35 @@ jobs:
 
   # Security & Performance Validation
   security-performance:
-    name: 'Security & Performance Validation'
+    name: "Security & Performance Validation"
     runs-on: ubuntu-latest
     needs: production-environment-validation
     steps:
-      - name: 'Checkout Repository'
+      - name: "Checkout Repository"
         uses: actions/checkout@v4
 
-      - name: 'Setup Node.js'
+      - name: "Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
+          cache: "npm"
 
-      - name: 'Install Dependencies'
+      - name: "Install Dependencies"
         run: npm ci
 
-      - name: 'Security Audit (Production)'
+      - name: "Security Audit (Production)"
         run: |
           # Run comprehensive security audit for production
           npm audit --audit-level=moderate
           echo "✅ Security audit completed"
 
-      - name: 'Bundle Analysis'
+      - name: "Bundle Analysis"
         run: |
           # Analyze production bundle size
           npm run build:remote
           echo "✅ Bundle analysis completed"
 
-      - name: 'Performance Testing'
+      - name: "Performance Testing"
         run: |
           # Run Lighthouse CI for performance testing
           echo "Running performance tests..."
@@ -277,7 +277,7 @@ jobs:
 
   # Production Readiness Check
   production-readiness:
-    name: 'Production Readiness Verification'
+    name: "Production Readiness Verification"
     runs-on: ubuntu-latest
     needs:
       - production-environment-validation
@@ -288,7 +288,7 @@ jobs:
       - security-performance
     if: always()
     steps:
-      - name: 'Production Readiness Assessment'
+      - name: "Production Readiness Assessment"
         run: |
           echo "📋 Production Readiness Check Results:"
           echo "✅ Environment Validation: ${{ needs.production-environment-validation.result }}"
@@ -297,7 +297,7 @@ jobs:
           echo "✅ E2E Tests (Production): ${{ needs.e2e-production-tests.result }}"
           echo "✅ AI Services: ${{ needs.ai-services-validation.result }}"
           echo "✅ Security & Performance: ${{ needs.security-performance.result }}"
-          
+
           # Check if all critical jobs passed
           if [[ "${{ needs.production-environment-validation.result }}" != "success" ]] || \
              [[ "${{ needs.database-validation.result }}" != "success" ]] || \
@@ -308,19 +308,19 @@ jobs:
             echo "🛠️  Fix all failing checks before proceeding"
             exit 1
           fi
-          
+
           echo "🎉 Production readiness verified!"
           echo "✅ Safe to merge to main branch for deployment"
           echo "🚀 All systems go for production deployment"
 
   # Notification
   notify-readiness:
-    name: 'Notify Production Readiness'
+    name: "Notify Production Readiness"
     runs-on: ubuntu-latest
     needs: production-readiness
     if: success()
     steps:
-      - name: 'Notify Team of Production Readiness'
+      - name: "Notify Team of Production Readiness"
         run: |
           echo "🚀 CONFIG/REMOTE BRANCH READY FOR DEPLOYMENT"
           echo "📋 All production validation checks passed:"

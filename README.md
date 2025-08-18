@@ -2,7 +2,7 @@
 
 Local-first GPT-4o chat and image generation app built with **monorepo architecture**. Built on Next.js (App Router), TypeScript, and Supabase with a dual-configuration Git workflow. The app:
 
-- Streams chat responses via OpenAI GPT-4o API  
+- Streams chat responses via OpenAI GPT-4o API
 - Generates images via DALL-E 3 API (image generation/edits)
 - Persists auth, profiles, conversations, messages, and image metadata in Supabase
 - Stores binary image files in Supabase Storage
@@ -26,12 +26,12 @@ This project implements comprehensive CI/CD automation through GitHub Actions wi
 
 ### Automated Workflow Matrix
 
-| Branch | Workflow File | Validation Level | Automated Checks |
-|--------|---------------|------------------|------------------|
-| `config/local` | `ci-config-local.yml` | Development | Unit tests, TDD compliance, code quality, environment validation |
-| `config/remote` | `ci-config-remote.yml` | Production Prep | E2E tests, DB validation, security scans, AI services testing |
-| `main` | `ci-main-deployment.yml` | Deployment | Health checks, Vercel deployment, post-deployment monitoring |
-| `Pull Requests` | `pr-validation.yml` | Merge Validation | Branch strategy, test coverage, security scanning |
+| Branch          | Workflow File            | Validation Level | Automated Checks                                                 |
+| --------------- | ------------------------ | ---------------- | ---------------------------------------------------------------- |
+| `config/local`  | `ci-config-local.yml`    | Development      | Unit tests, TDD compliance, code quality, environment validation |
+| `config/remote` | `ci-config-remote.yml`   | Production Prep  | E2E tests, DB validation, security scans, AI services testing    |
+| `main`          | `ci-main-deployment.yml` | Deployment       | Health checks, Vercel deployment, post-deployment monitoring     |
+| `Pull Requests` | `pr-validation.yml`      | Merge Validation | Branch strategy, test coverage, security scanning                |
 
 ### GitHub Actions Workflows
 
@@ -48,6 +48,7 @@ This project implements comprehensive CI/CD automation through GitHub Actions wi
 Configure these secrets in your GitHub repository (`Settings > Secrets and variables > Actions`):
 
 **Production Environment Secrets:**
+
 ```env
 SUPABASE_URL_PROD=https://[your-project-ref].supabase.co
 SUPABASE_ANON_KEY_PROD=[your-production-anon-key]
@@ -57,6 +58,7 @@ OPENAI_API_KEY_PROD=[your-production-openai-key]
 ```
 
 **Development Environment Secrets:**
+
 ```env
 SUPABASE_URL_LOCAL=http://127.0.0.1:54321
 SUPABASE_ANON_KEY_LOCAL=[your-local-anon-key]
@@ -64,6 +66,7 @@ SUPABASE_SERVICE_ROLE_KEY_LOCAL=[your-local-service-role-key]
 ```
 
 **Shared Secrets:**
+
 ```env
 OPENAI_API_KEY=[your-openai-api-key]
 ANTHROPIC_API_KEY=[your-anthropic-api-key]
@@ -95,12 +98,12 @@ graph LR
     B --> C[Unit Tests + TDD]
     C --> D[Code Quality]
     D --> E[Ready for config/remote]
-    
+
     F[config/remote Push] -->|Triggers| G[Production Preparation]
     G --> H[E2E Tests + DB Validation]
     H --> I[Security + Performance]
     I --> J[Ready for main]
-    
+
     K[main Push] -->|Triggers| L[Deployment Pipeline]
     L --> M[Health Checks]
     M --> N[Vercel Deployment]
@@ -121,11 +124,13 @@ graph LR
 ### Monitoring and Troubleshooting
 
 **Dashboard Links:**
+
 - GitHub Actions: `https://github.com/[username]/[repo]/actions`
 - Vercel Deployments: `https://vercel.com/dashboard`
 - Supabase Dashboard: `https://app.supabase.com/projects`
 
 **Common Issues:**
+
 - Workflow fails with "Secret not found": Verify secret names match exactly
 - Environment validation fails: Check all required secrets are configured
 - Branch protection blocks merge: Ensure all status checks pass
@@ -136,7 +141,7 @@ graph LR
 ## Table of Contents
 
 - [About](#about)
-- [Key Features](#key-features) 
+- [Key Features](#key-features)
 - [Project Structure (Monorepo)](#project-structure-monorepo)
   - [Directory Overview](#directory-overview)
   - [Path Aliases](#path-aliases)
@@ -213,7 +218,7 @@ This project uses **npm workspaces** to organize code into a clean monorepo stru
 ├── frontend/                    # Next.js App Router workspace
 │   ├── app/                     # Routes, layouts, route handlers
 │   │   ├── (dashboard)/         # Main chat interface
-│   │   ├── actions/             # Server Actions  
+│   │   ├── actions/             # Server Actions
 │   │   └── api/                 # Route handlers
 │   ├── components/              # Reusable UI components
 │   │   ├── ui/                  # ShadCN/UI primitives
@@ -258,9 +263,10 @@ This project uses **npm workspaces** to organize code into a clean monorepo stru
 ```
 
 **Testing Commands** (run from root):
+
 ```bash
 npm run test          # Unit tests (vitest)
-npm run test:e2e      # E2E tests (playwright)  
+npm run test:e2e      # E2E tests (playwright)
 npm run test:coverage # Coverage report
 ```
 
@@ -281,6 +287,7 @@ main                 # 🚫 Production deployment (NEVER commit directly)
 ### CI/CD Development Flow
 
 1. **Feature Development** (config/local):
+
    ```bash
    git checkout config/local
    # Develop features with TDD approach
@@ -290,10 +297,11 @@ main                 # 🚫 Production deployment (NEVER commit directly)
    ```
 
 2. **CI/CD Pipeline** (config/remote):
+
    ```bash
    git checkout config/remote
    git merge config/local --no-ff
-   
+
    # Automated CI/CD pipeline execution
    npm run ci:deploy:pipeline
    # - Copies .env.production to frontend
@@ -301,20 +309,21 @@ main                 # 🚫 Production deployment (NEVER commit directly)
    # - Validates database migrations
    # - Builds production frontend
    # - Runs E2E tests with production config
-   
+
    # Manual production optimizations
    git commit -m "config(prod): optimize for production"
    git push origin config/remote
    ```
 
 3. **Automated Deployment** (main):
+
    ```bash
    # Automated via CI/CD pipeline
    npm run ci:auto:merge:main
    # - Merges config/remote to main
    # - Pushes to main (triggers Vercel deployment)
    # - Runs post-deployment verification
-   
+
    # Return to development cycle
    git checkout config/local
    ```
@@ -358,6 +367,7 @@ graph LR
 ### CI/CD Scripts
 
 **Core Pipeline Commands:**
+
 ```bash
 # Full CI/CD pipeline execution
 npm run ci:deploy:pipeline
@@ -373,6 +383,7 @@ npm run ci:auto:merge:main      # Merge and deploy to main
 ```
 
 **Pipeline Features:**
+
 - **Environment Isolation**: Automatic .env.production copying
 - **Database Validation**: Remote connection and migration testing
 - **Comprehensive Testing**: Unit, integration, and E2E tests
@@ -566,26 +577,26 @@ GET    /api/health                 // Health check
 ```ts
 interface WebSocketEvents {
   // Connection Management
-  'user:online': { userId: string; timestamp: string }
-  'user:offline': { userId: string; timestamp: string }
+  "user:online": { userId: string; timestamp: string };
+  "user:offline": { userId: string; timestamp: string };
 
   // Conversations
-  'conversation:created': { conversationId: string; title?: string }
-  'conversation:renamed': { conversationId: string; title: string }
-  'conversation:deleted': { conversationId: string }
+  "conversation:created": { conversationId: string; title?: string };
+  "conversation:renamed": { conversationId: string; title: string };
+  "conversation:deleted": { conversationId: string };
 
   // Messages
-  'message:created': { conversationId: string; message: Message }
-  'assistant:delta': { conversationId: string; token: string }
+  "message:created": { conversationId: string; message: Message };
+  "assistant:delta": { conversationId: string; token: string };
 
   // Image jobs
-  'image:started': { conversationId?: string; imageId: string; prompt: string }
-  'image:progress': { imageId: string; percent: number }
-  'image:completed': { imageId: string; storagePath: string }
+  "image:started": { conversationId?: string; imageId: string; prompt: string };
+  "image:progress": { imageId: string; percent: number };
+  "image:completed": { imageId: string; storagePath: string };
 
   // Typing Indicators
-  'typing:start': { userId: string; conversationId: string }
-  'typing:stop': { userId: string; conversationId: string }
+  "typing:start": { userId: string; conversationId: string };
+  "typing:stop": { userId: string; conversationId: string };
 }
 ```
 
@@ -598,15 +609,16 @@ interface WebSocketEvents {
 This project follows **Test-Driven Development** for all UI components and features:
 
 1. **Write Tests First**: Create comprehensive test files before implementing components
-2. **Implement Feature**: Build the component to pass the tests  
+2. **Implement Feature**: Build the component to pass the tests
 3. **Run Tests**: Verify implementation with `npm run test`
 4. **Refactor**: Improve code while maintaining test coverage
 
 **Test Structure**:
+
 ```bash
 tests/unit/frontend/components/chat/
 ├── chat-input.test.tsx      # ✅ 11 tests passing
-├── generated-image.test.tsx # ✅ 14 tests passing  
+├── generated-image.test.tsx # ✅ 14 tests passing
 ├── message-item.test.tsx    # ✅ 16 tests passing
 └── message-list.test.tsx    # 🔄 Next to implement
 ```
@@ -636,6 +648,7 @@ Development is managed through **Task Master AI MCP tools** for structured, task
 ### Prerequisites
 
 **Required Tools:**
+
 - Node.js 22+
 - npm (monorepo workspace support)
 - Docker & Docker Compose
@@ -643,14 +656,17 @@ Development is managed through **Task Master AI MCP tools** for structured, task
 - Git (for dual-branch workflow)
 
 **API Keys:**
+
 - OpenAI API Key (GPT-4o + DALL-E 3)
 - Anthropic API Key (for Task Master AI)
 
 **Development Tools:**
+
 - Task Master AI (MCP Tool for Cursor)
 - Cursor IDE (recommended for MCP integration)
 
 **Verification:**
+
 ```sh
 node --version        # v22+
 npm -v               # 10+
@@ -663,6 +679,7 @@ git --version
 ### Installation
 
 **1. Clone and Setup Monorepo:**
+
 ```bash
 git clone https://github.com/ehkarabas/gpt-image-generator.git
 cd gpt-image-generator
@@ -672,6 +689,7 @@ npm install
 ```
 
 **2. Git Workflow Setup:**
+
 ```bash
 # Verify you're on the correct branch
 git branch                    # Should show: config/local
@@ -702,6 +720,7 @@ Configure Task Master AI MCP tools in Cursor:
    ```
 
 **4. Verify Monorepo Structure:**
+
 ```bash
 # Check workspace configuration
 npm run test          # Unit tests from root
@@ -715,26 +734,31 @@ npm run dev           # Frontend development server
 
 2. **Install Supabase CLI**: [Supabase CLI Install](https://supabase.com/docs/guides/local-development/cli/getting-started)
 
-3. **Configure OpenAI Keys**: 
+3. **Configure OpenAI Keys**:
    - In the `supabase/functions/` folder, rename `.env.example` to `.env`
    - Add your OpenAI API key: [Get OpenAI Keys](http://platform.openai.com/account/)
 
 4. **Start Supabase Local Stack**:
+
    ```sh
    npx supabase start
    ```
+
    Note: If you change your `supabase/functions/.env` file locally, restart with:
+
    ```sh
    npx supabase stop && npx supabase start
    ```
 
 5. **Update Environment Variables**: After starting Supabase, update your `.env.local` file with the local URLs:
+
    ```env
    NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
    NEXT_PUBLIC_SUPABASE_ANON_KEY=ey...
    ```
 
 6. **Serve Edge Functions Locally**:
+
    ```sh
    npx supabase functions serve --import-map ./supabase/functions/import_map.json
    ```
@@ -756,7 +780,7 @@ npm run dev           # Frontend development server
 ```text
 .
 ├── .env.local                   # Local development (gitignored)
-├── .env.local.example          # Template for local setup  
+├── .env.local.example          # Template for local setup
 ├── .env.production             # Production config (gitignored)
 ├── .env.production.example     # Template for production
 └── frontend/
@@ -768,6 +792,7 @@ npm run dev           # Frontend development server
 #### TDD Environment Validation Commands
 
 **🚫 NEVER use these commands (creates false positives)**:
+
 ```bash
 # ❌ FORBIDDEN - No environment validation
 playwright test
@@ -776,6 +801,7 @@ test.skip(!process.env.VAR, 'Not configured')
 ```
 
 **✅ ALWAYS use these commands (proper TDD validation)**:
+
 ```bash
 # ✅ CORRECT - Validates environment first
 npm run test:e2e:local      # For local development
@@ -786,6 +812,7 @@ npm run ci:prepare:local    # Manual environment preparation
 #### Environment Setup Process
 
 **Step 1: Create Local Environment**
+
 ```bash
 # Copy example files
 cp .env.local.example .env.local
@@ -800,6 +827,7 @@ npm run ci:prepare:local
 **Step 2: Configure API Keys**
 
 Edit `.env.local` with your actual keys:
+
 ```env
 # Required Keys
 OPENAI_API_KEY=sk-proj-YOUR-KEY-HERE
@@ -819,6 +847,7 @@ OPENAI_MODEL_IMAGE=dall-e-3
 ```
 
 **Step 3: Test Environment Configuration**
+
 ```bash
 # Verify environment validation works
 npm run test:e2e:local
@@ -829,6 +858,7 @@ npm run test:e2e:local
 #### Production Environment Setup
 
 Edit `.env.production` with production values:
+
 ```env
 # Required Keys (from secrets)
 OPENAI_API_KEY=${OPENAI_API_KEY_PROD}
@@ -857,11 +887,13 @@ CONTENT_FILTER_LEVEL=high
 The project includes comprehensive validation scripts that ensure TDD compliance:
 
 **scripts/ci/prepare-local.js**: Validates local environment
+
 - ❌ **FAILS** tests if .env.local missing
 - ❌ **FAILS** tests if required variables missing
 - ✅ **PASSES** only when environment is complete
 
-**scripts/ci/prepare-production.js**: Validates production environment  
+**scripts/ci/prepare-production.js**: Validates production environment
+
 - ❌ **FAILS** tests if .env.production missing
 - ❌ **FAILS** tests if production variables missing
 - ✅ **PASSES** only when production environment is complete
@@ -869,6 +901,7 @@ The project includes comprehensive validation scripts that ensure TDD compliance
 #### Troubleshooting Environment Issues
 
 **Error: ".env.local not found"**
+
 ```bash
 # Solution:
 cp .env.local.example .env.local
@@ -877,6 +910,7 @@ npm run ci:prepare:local
 ```
 
 **Error: "Missing environment variables"**
+
 ```bash
 # Check which variables are missing:
 npm run ci:prepare:local
@@ -885,6 +919,7 @@ npm run ci:prepare:local
 ```
 
 **Error: "E2E tests skipping"**
+
 ```bash
 # This indicates TDD violation - tests should FAIL, not skip
 # Always use proper validation commands:
@@ -895,12 +930,14 @@ npm run test:e2e:remote   # Not: npm run test:e2e
 #### Agent/Developer Guidelines
 
 **For AI Agents working on this project**:
+
 - ✅ **ALWAYS** validate environment before running tests
 - ✅ **ALWAYS** use `npm run ci:prepare:local` before E2E tests
 - ❌ **NEVER** use `test.skip()` for environment issues
 - ❌ **NEVER** proceed when environment validation fails
 
 **For Developers**:
+
 - Follow the setup process exactly as documented
 - Never commit .env.local or .env.production files
 - Use the validation scripts to ensure proper setup
@@ -967,6 +1004,7 @@ tests/                        # All tests at ROOT level
 **CRITICAL REQUIREMENT**: ALL features MUST follow TDD approach with E2E tests written BEFORE implementation.
 
 1. **Create E2E Test FIRST (MANDATORY)**:
+
    ```bash
    # STEP 1: Create E2E test file BEFORE any feature work
    touch tests/e2e/frontend/[feature-name].spec.ts
@@ -974,6 +1012,7 @@ tests/                        # All tests at ROOT level
    ```
 
 2. **Verify Test Fails (TDD Red Phase)**:
+
    ```bash
    # STEP 2: Ensure E2E test fails before implementation
    npm run test:e2e
@@ -981,10 +1020,11 @@ tests/                        # All tests at ROOT level
    ```
 
 3. **Implement Feature (TDD Green Phase)**:
+
    ```bash
    # STEP 3: Build component/feature to pass E2E tests
    # Implementation goes here...
-   
+
    # STEP 4: Verify E2E test passes
    npm run test:e2e
    echo "E2E test passing - feature ready for production"
@@ -998,13 +1038,16 @@ tests/                        # All tests at ROOT level
    ```
 
 **Unit Test TDD (Secondary)**:
+
 1. **Write Unit Test First**:
+
    ```bash
    # Create unit test file after E2E tests
    tests/unit/frontend/components/chat/new-component.test.tsx
    ```
 
 2. **Implement Component**:
+
    ```bash
    # Build component to pass unit tests
    frontend/components/chat/new-component.tsx
@@ -1020,13 +1063,15 @@ tests/                        # All tests at ROOT level
 ### Current Test Coverage
 
 **Chat Components** (Phase 1):
+
 - ✅ ChatInput: 11 tests passing
-- ✅ GeneratedImage: 14 tests passing  
+- ✅ GeneratedImage: 14 tests passing
 - ✅ MessageItem: 16 tests passing
 - 🔄 MessageList: Next to implement
 - 🔄 ChatInterface: Next to implement
 
 **Test Commands** (run from root):
+
 ```bash
 npm run test                 # All unit tests (vitest)
 npm run test:watch          # Watch mode for development
@@ -1040,12 +1085,14 @@ npm run test:e2e:ui        # Playwright UI mode
 ## Quality & Testing
 
 **Testing Framework**:
+
 - **Unit Tests**: Vitest + React Testing Library
 - **E2E Tests**: Playwright (cross-browser)
 - **Linting**: ESLint + Prettier
 - **Type Safety**: TypeScript strict mode
 
 **Quality Commands** (run from root):
+
 ```bash
 npm run lint              # ESLint + Prettier
 npm run type-check        # TypeScript validation
@@ -1056,6 +1103,7 @@ npm run test:e2e:ui       # Playwright UI mode
 ```
 
 **Coverage Focus**:
+
 - ✅ **Chat Components**: TDD implementation with comprehensive tests
 - 🔄 **API Routes**: Streaming chat flows and image generation endpoints
 - 🔄 **Database Operations**: Conversation, message, and image CRUD
@@ -1063,6 +1111,7 @@ npm run test:e2e:ui       # Playwright UI mode
 - 🔄 **Error Boundaries**: Component error handling
 
 **Quality Gates - MANDATORY ENFORCEMENT**:
+
 - **E2E Tests MANDATORY**: NO feature can proceed to config/remote without comprehensive E2E test coverage
 - **Test-First Development**: E2E tests must be written BEFORE feature implementation (TDD)
 - **Production Readiness**: E2E tests required before production deployment (ZERO TOLERANCE)
@@ -1078,23 +1127,23 @@ Health check endpoint example (App Router):
 // app/api/health/route.ts
 export async function GET() {
   return Response.json({
-    status: 'healthy',
+    status: "healthy",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    service: 'gpt-image-generator-api',
-    version: process.env.npm_package_version || '1.0.0',
-    environment: process.env.NODE_ENV || 'development',
+    service: "gpt-image-generator-api",
+    version: process.env.npm_package_version || "1.0.0",
+    environment: process.env.NODE_ENV || "development",
     database: await checkDatabaseHealth(),
-  })
+  });
 }
 
 async function checkDatabaseHealth() {
   try {
     // Example: perform a lightweight DB check (adjust for your ORM/client)
     // await db.select().from(users).limit(1)
-    return 'connected'
+    return "connected";
   } catch (error) {
-    return 'disconnected'
+    return "disconnected";
   }
 }
 ```
@@ -1119,7 +1168,7 @@ alter table public.images enable row level security;
 do $$
 begin
   if not exists (
-    select 1 from pg_policies 
+    select 1 from pg_policies
     where schemaname = 'public' and tablename = 'images' and polname = 'Allow owners to read own images'
   ) then
     create policy "Allow owners to read own images" on public.images
@@ -1127,7 +1176,7 @@ begin
   end if;
 
   if not exists (
-    select 1 from pg_policies 
+    select 1 from pg_policies
     where schemaname = 'public' and tablename = 'images' and polname = 'Allow owners to insert images'
   ) then
     create policy "Allow owners to insert images" on public.images
