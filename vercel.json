@@ -1,0 +1,18 @@
+{
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "config/local": false,
+      "config/remote": false
+    }
+  },
+  "buildCommand": "cd frontend && npm run build",
+  "outputDirectory": "frontend/.next",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "functions": {
+    "frontend/app/api/**": {
+      "runtime": "nodejs18.x"
+    }
+  }
+}
