@@ -1,19 +1,23 @@
-import { supabase } from "@/lib/supabase/client";
+// frontend/app/api/supabase/route.ts
+import { createClient } from "@/lib/supabase/server"; // server client import et
 
 export async function GET() {
+    // console.log("URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
+    // console.log("KEY:", process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  
   if (
     !process.env.NEXT_PUBLIC_SUPABASE_URL ||
     !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   ) {
     return Response.json(
-      { ok: false, error: "Supabase environment variables are not set" },
+      { ok: false, error: "Supabase environment variable'ları set edilmemiş" },
       { status: 500 },
     );
   }
 
   try {
-    // Try a lightweight count query against a common table if it exists.
-    // If it doesn't exist, an error still confirms connectivity and auth.
+    const supabase = await createClient(); // AWAIT ekle!
+    
     const { count, error } = await supabase
       .from("profiles")
       .select("*", { count: "exact", head: true });

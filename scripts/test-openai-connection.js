@@ -1,5 +1,12 @@
 const { OpenAI } = require("openai");
-require("dotenv").config();
+const fs = require("fs");
+
+// Load .env.production if it exists, otherwise .env
+if (fs.existsSync(".env.production")) {
+  require("dotenv").config({ path: ".env.production" });
+} else {
+  require("dotenv").config();
+}
 
 async function testOpenAIConnection() {
   try {

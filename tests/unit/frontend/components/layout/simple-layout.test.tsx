@@ -1,11 +1,24 @@
 import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { AdaptiveLayout } from "@/components/chat/layouts/adaptive-layout";
+import { AdaptiveLayout } from "@/components/chat/adaptive-layout";
 import { SimpleLayout } from "@/components/layout/simple-layout";
 
 vi.mock("@/components/chat/chat-interface", () => ({
   ChatInterface: () => <div data-testid="chat-interface-mock" />,
+}));
+
+// Mock Lucide icons
+vi.mock('lucide-react', () => ({
+  Menu: () => <span data-testid="menu-icon">Menu</span>,
+  Plus: () => <span data-testid="plus-icon">Plus</span>,
+  Settings: () => <span data-testid="settings-icon">Settings</span>,
+  Loader2: () => <span data-testid="loader-icon">Loading</span>,
+  Search: () => <span data-testid="search-icon">Search</span>,
+  X: () => <span data-testid="x-icon">Close</span>,
+  Send: () => <span data-testid="send-icon">Send</span>,
+  ChevronDown: () => <span data-testid="chevron-down-icon">▼</span>,
+  MessageSquare: () => <span data-testid="message-square-icon">💬</span>,
 }));
 
 vi.mock("@/hooks/use-conversations", () => ({

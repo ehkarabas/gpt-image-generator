@@ -1,89 +1,68 @@
-import { useState } from "react";
+"use client";
 
-export interface Message {
-  id: string;
-  content: string;
-  role: "user" | "assistant";
-  created_at: string;
-  user?: {
-    display_name?: string;
-    avatar_url?: string;
-  };
-  images?: any[];
-}
+import { Message } from '@/lib/db/schema';
+import { 
+  useMessages as useMessagesQuery,
+  useSendMessage,
+  useGenerateImage,
+  type Message as QueryMessage
+} from './useQueries/useMessagesQuery';
 
-export interface UseMessagesReturn {
-  messages: Message[];
-  sendMessage: (content: string) => Promise<void>;
-  error: { message: string } | null;
-  clearError: () => void;
-  retry: () => void;
-  loadMoreMessages: () => void;
-  hasMore: boolean;
-  isLoading: boolean;
-}
+// Service logic moved to useQueries/useMessagesQuery.ts
 
-export function useMessages(): UseMessagesReturn {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [error, setError] = useState<{ message: string } | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasMore] = useState(false);
+export function useMessages(conversationId: string | null) {
+  // Use new React Query infinite query hook
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useMessagesQuery(conversationId || '')
+  
+  const sendMutation = useSendMessage()
+  const generateImageMutation = useGenerateImage()
 
-  const sendMessage = async (content: string) => {
-    try {
-      setError(null);
-      setIsLoading(true);
+  // Flatten pages into single message array for backward compatibility
+  const messages = data?.pages.flatMap(page => page.messages) || []
 
-      // Add user message optimistically
-      const userMessage: Message = {
-        id: `user-${Date.now()}`,
-        content,
-        role: "user",
-        created_at: new Date().toISOString(),
-      };
-
-      setMessages((prev) => [...prev, userMessage]);
-
-      // TODO: Implement actual API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Add assistant response
-      const assistantMessage: Message = {
-        id: `assistant-${Date.now()}`,
-        content: "This is a placeholder response.",
-        role: "assistant",
-        created_at: new Date().toISOString(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-    } catch (err) {
-      setError({ message: "Failed to send message" });
-    } finally {
-      setIsLoading(false);
+  const sendMessage = (content: string, role: 'user' | 'assistant' = 'user') => {
+    if (!conversationId) {
+      throw new Error('No active conversation')
     }
-  };
+    
+    return sendMutation.mutate({
+      conversationId,
+      content,
+      role,
+    })
+  }
 
-  const clearError = () => {
-    setError(null);
-  };
-
-  const retry = () => {
-    // TODO: Implement retry logic
-    clearError();
-  };
-
-  const loadMoreMessages = () => {
-    // TODO: Implement load more logic
-  };
+  const generateImage = (prompt: string) => {
+    if (!conversationId) {
+      throw new Error('No active conversation')
+    }
+    
+    return generateImageMutation.mutate({
+      conversationId,
+      prompt,
+    })
+  }
 
   return {
     messages,
-    sendMessage,
-    error,
-    clearError,
-    retry,
-    loadMoreMessages,
-    hasMore,
     isLoading,
-  };
+    error,
+    sendMessage,
+    generateImage,
+    isSending: sendMutation.isPending,
+    isGenerating: generateImageMutation.isPending,
+    sendError: sendMutation.error,
+    generateError: generateImageMutation.error,
+    // Additional pagination methods for future use
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  }
 }
