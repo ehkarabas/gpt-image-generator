@@ -174,6 +174,7 @@ vi.mock("lucide-react", () => ({
   Edit2: () => React.createElement("div", { "data-testid": "edit2-icon" }),
   Trash2: () => React.createElement("div", { "data-testid": "trash2-icon" }),
   Search: () => React.createElement("div", { "data-testid": "search-icon" }),
+  Settings: () => React.createElement("div", { "data-testid": "settings-icon" }),
 }));
 
 // Mock @/lib/utils

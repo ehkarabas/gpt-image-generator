@@ -30,7 +30,7 @@
     "frontend/**/*.tsx",
     "types/**/*.ts",
     "scripts/**/*.ts"
-  ],
+, "temp/adaptive-layout-deprecated.tsx"  ],
   "exclude": [
     "node_modules",
     "frontend/node_modules",
