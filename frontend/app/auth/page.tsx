@@ -2,6 +2,7 @@
 
 import { AuthForm } from '@/components/auth/auth-form';
 import Image from 'next/image';
+import logoImg from '@/public/ehlogo.png';
 
 /**
  * Auth Page - Supabase Authentication
@@ -13,7 +14,7 @@ export default function AuthPage() {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex gap-4 items-center justify-center">
-            <Image src="/ehlogo.png" alt="GPT Image Generator" width={32} height={32} style={{ display: 'inline-block' }} />
+            <Image src={logoImg} alt="GPT Image Generator" width={32} height={32} style={{ display: 'inline-block' }} />
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               GPT Image Generator
             </h1>
