@@ -6,12 +6,12 @@
       "config/remote": true
     }
   },
-  "buildCommand": "cd frontend && npm run build",
-  "outputDirectory": "frontend/.next",
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
   "installCommand": "npm install",
   "framework": "nextjs",
   "functions": {
-    "frontend/app/api/**": {
+    "app/api/**": {
       "runtime": "nodejs18.x"
     }
   }
