@@ -3,12 +3,14 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { GeneratedImage } from "./generated-image";
+import { ErrorBoundary } from "@/components/system/error-boundary";
 
 interface MessageItemProps {
   message: {
     id: string;
     content: string;
     role: "user" | "assistant";
+    messageType?: string;
     created_at: string;
     user?: {
       display_name?: string;
@@ -29,7 +31,22 @@ interface MessageItemProps {
 
 function formatTime(dateString: string): string {
   try {
-    const date = new Date(dateString);
+    // Handle both ISO string and timestamp
+    let date: Date;
+    
+    if (typeof dateString === 'string') {
+      date = new Date(dateString);
+    } else {
+      // Fallback for any other format
+      date = new Date();
+    }
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date string:', dateString);
+      return "Now";
+    }
+    
     // Use a stable timezone to avoid SSR/CSR mismatches
     return new Intl.DateTimeFormat("en-US", {
       hour: "numeric",
@@ -37,7 +54,8 @@ function formatTime(dateString: string): string {
       hour12: true,
       timeZone: "UTC",
     }).format(date);
-  } catch {
+  } catch (error) {
+    console.warn('Date formatting error:', error, 'Input:', dateString);
     return "Now";
   }
 }
@@ -49,6 +67,24 @@ export function MessageItem({
 }: MessageItemProps) {
   const isUser = message.role === "user";
   const hasImages = message.images && message.images.length > 0;
+  const isImageMessage = message.messageType === 'image';
+  
+  // Check if content is an image URL (starts with http and ends with common image extensions)
+  const isImageUrl = (content: string): boolean => {
+    if (!content) return false;
+    
+    const imageUrlPattern = /^https?:\/\/.+\.(jpg|jpeg|png|gif|webp|svg)(\?.*)?$/i;
+    const dalleUrlPattern = /oaidalleapiprodscus\.blob\.core\.windows\.net/i;
+    const result = imageUrlPattern.test(content) || dalleUrlPattern.test(content);
+    
+    // Debug: Log URL detection for troubleshooting
+    if (content.includes('oaidalleapiprodscus')) {
+      console.log('DALL-E URL detected:', content);
+      console.log('Pattern match result:', result);
+    }
+    
+    return result;
+  };
 
   return (
     <div
@@ -91,18 +127,28 @@ export function MessageItem({
           isUser ? "items-end" : "items-start",
         )}
       >
-        {/* Text Message */}
-        <div
-          className={cn(
-            "rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap",
-            isUser
-              ? "bg-blue-600 text-white rounded-br-md"
-              : "bg-white border border-gray-200 text-gray-900 rounded-bl-md shadow-sm",
-          )}
-          data-testid={`message-content-${message.role}`}
-        >
-          <p>{message.content}</p>
-        </div>
+        {/* Message Content - Text or Image */}
+        {isImageMessage || isImageUrl(message.content) ? (
+          // Render as image
+          <div className="max-w-md" data-testid={`message-image-${message.role}`}>
+            <ErrorBoundary>
+              <GeneratedImage imageUrl={message.content} alt="Generated image" />
+            </ErrorBoundary>
+          </div>
+        ) : (
+          // Render as text
+          <div
+            className={cn(
+              "rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap",
+              isUser
+                ? "bg-blue-600 text-white dark:bg-blue-500 rounded-br-md"
+                : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md shadow-sm",
+            )}
+            data-testid={`message-content-${message.role}`}
+          >
+            <p>{message.content}</p>
+          </div>
+        )}
 
         {/* Generated Images */}
         {hasImages && (
@@ -116,7 +162,7 @@ export function MessageItem({
         {/* Timestamp */}
         <div
           className={cn(
-            "text-xs text-gray-500 px-1",
+            "text-xs text-gray-500 dark:text-gray-400 px-1",
             isUser ? "text-right" : "text-left",
           )}
         >

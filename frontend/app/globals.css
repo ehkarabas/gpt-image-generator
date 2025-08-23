@@ -1,6 +1,98 @@
 @tailwind base;
+
+@custom-variant dark (&:is(.dark *));
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light Theme - Pure white background focused */
+    --background: 0 0% 100%;                    /* Pure white background */
+    --foreground: 0 0% 10%;                     /* Very dark text (close to black) */
+    --card: 0 0% 100%;                          /* White cards */
+    --card-foreground: 0 0% 10%;               /* Dark text on cards */
+    --popover: 0 0% 100%;                       /* White popovers */
+    --popover-foreground: 0 0% 10%;            /* Dark text on popovers */
+    --primary: 39 100% 52%;                     /* Orange accent (#f59e0b) */
+    --primary-foreground: 0 0% 100%;           /* White text on primary */
+    --secondary: 0 0% 96%;                      /* Light gray for secondary areas */
+    --secondary-foreground: 0 0% 40%;          /* Medium gray for secondary text */
+    --muted: 0 0% 96%;                         /* Light gray for muted areas */
+    --muted-foreground: 220 9% 43%;            /* Medium gray for muted text */
+    --accent: 39 100% 52%;                     /* Orange accent consistent */
+    --accent-foreground: 0 0% 100%;            /* White text on accent */
+    --destructive: 0 84% 60%;                  /* Red for destructive actions */
+    --destructive-foreground: 0 0% 98%;        /* White text on destructive */
+    --border: 220 13% 91%;                     /* Light gray borders */
+    --input: 220 13% 91%;                      /* Light gray input borders */
+    --ring: 39 100% 52%;                       /* Orange focus ring */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark Theme - Claude Desktop Inspired Design */
+    --background: 0 0% 10%;                     /* Very dark background (#1a1a1a) */
+    --foreground: 0 0% 92%;                     /* Light text (#ebebeb) */
+    --card: 0 0% 16%;                          /* Dark cards (#292929) */
+    --card-foreground: 0 0% 92%;               /* Light text on cards */
+    --popover: 0 0% 16%;                       /* Dark popovers */
+    --popover-foreground: 0 0% 92%;            /* Light text on popovers */
+    --primary: 39 100% 52%;                    /* Orange accent consistent */
+    --primary-foreground: 0 0% 100%;          /* White text on primary */
+    --secondary: 0 0% 20%;                     /* Dark gray for secondary areas */
+    --secondary-foreground: 0 0% 92%;         /* Light text on secondary */
+    --muted: 0 0% 20%;                        /* Dark gray for muted areas */
+    --muted-foreground: 0 0% 64%;             /* Medium gray for muted text */
+    --accent: 39 100% 52%;                    /* Orange accent consistent */
+    --accent-foreground: 0 0% 100%;           /* White text on accent */
+    --destructive: 0 63% 31%;                 /* Dark red for destructive actions */
+    --destructive-foreground: 0 0% 98%;       /* White text on destructive */
+    --border: 0 0% 27%;                       /* Dark borders (#454545) */
+    --input: 0 0% 20%;                        /* Dark input backgrounds */
+    --ring: 39 100% 52%;                      /* Orange focus ring */
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+:root {
+  --sidebar: hsl(0 0% 98%);
+  --sidebar-foreground: hsl(240 5.3% 26.1%);
+  --sidebar-primary: hsl(240 5.9% 10%);
+  --sidebar-primary-foreground: hsl(0 0% 98%);
+  --sidebar-accent: hsl(240 4.8% 95.9%);
+  --sidebar-accent-foreground: hsl(240 5.9% 10%);
+  --sidebar-border: hsl(220 13% 91%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
+}
+
+.dark {
+  --sidebar: hsl(0 0% 6%);                    /* Very dark sidebar (#0f0f0f) */
+  --sidebar-foreground: hsl(0 0% 92%);        /* Light text (#ebebeb) */
+  --sidebar-primary: hsl(39 100% 52%);        /* Orange accent for primary */
+  --sidebar-primary-foreground: hsl(0 0% 100%); /* White text on primary */
+  --sidebar-accent: hsl(0 0% 14%);            /* Dark accent background (#242424) */
+  --sidebar-accent-foreground: hsl(0 0% 92%); /* Light text on accent */
+  --sidebar-border: hsl(0 0% 20%);            /* Dark borders (#333) */
+  --sidebar-ring: hsl(39 100% 52%);           /* Orange focus ring */
+}
+
+@theme inline {
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
 
 @layer base {
   :root {
@@ -44,5 +136,62 @@
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  /* Custom animations for chat input send button */
+  @keyframes spin-slow {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes gradient-move {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .animate-spin-slow {
+    animation: spin-slow 3s linear infinite;
+  }
+
+  .animate-gradient-move {
+    background-size: 200% 100%;
+    animation: gradient-move 2s ease-in-out infinite;
+  }
+
+  .border-gradient-moving {
+    background: linear-gradient(90deg, transparent, #3b82f6, #8b5cf6, #ec4899, transparent);
+    background-size: 200% 100%;
+    animation: gradient-move 2s ease-in-out infinite;
+    background-clip: border-box;
+  }
+
+  /* Custom Dropdown Menu Hover States (Design Reference Implementation) */
+  /* Dark Mode: Greyish orange background for readability */
+  .dark .dropdown-item:hover:not(.destructive) {
+    background-color: hsl(39 80% 25%);
+    color: hsl(0 0% 92%);
+  }
+
+  /* Light Mode: Bold text instead of color change */  
+  .light .dropdown-item:hover:not(.destructive),
+  :root .dropdown-item:hover:not(.destructive) {
+    font-weight: 600;
+    background-color: hsl(39 100% 95%);
+  }
+
+  /* Delete Conversation Exception (stays destructive color) */
+  .dropdown-item.destructive:hover {
+    color: hsl(var(--destructive));
+    background-color: hsl(var(--destructive) / 0.1);
   }
 }

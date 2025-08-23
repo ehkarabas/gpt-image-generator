@@ -1,152 +1,193 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2 } from "lucide-react";
-import { useMessages } from "@/hooks/use-messages";
 import { cn } from "@/lib/utils";
+import { Send } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 
 interface ChatInputProps {
   className?: string;
-  onSend?: (message: string) => Promise<void> | void;
+  onSend?: (content: string) => Promise<void>;
 }
 
 export function ChatInput({ className, onSend }: ChatInputProps) {
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const { sendMessage, error, clearError, retry } = useMessages();
+  const [message, setMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const placeholderText = 'Type your message... (Shift+Enter for new line)';
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || isLoading) return;
-
-    const message = input.trim();
-    setInput("");
-    setIsLoading(true);
-
-    try {
-      // Use onSend prop if provided, otherwise use useMessages hook
-      if (onSend) {
-        await onSend(message);
-      } else {
-        await sendMessage(message);
-      }
-    } catch (error) {
-      console.error("Failed to send message:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e);
-    }
-  };
-
+  // Auto-resize textarea
   useEffect(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
     }
-  }, [input]);
+  }, [message]);
+
+  // Force placeholder on client side to prevent null placeholder bug
+  useEffect(() => {
+    if (textareaRef.current && !textareaRef.current.placeholder) {
+      textareaRef.current.placeholder = placeholderText;
+    }
+  }, [placeholderText]);
+
+  const handleSend = async () => {
+    if (!message.trim() || isSending) return;
+
+    try {
+      setIsSending(true);
+      await onSend?.(message.trim());
+      setMessage('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    } finally {
+      setIsSending(false);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
   return (
-    <div
-      className={cn("border-t border-gray-200 bg-white", className)}
+    <div 
+      className={cn(
+        "border border-border rounded-lg bg-card shadow-sm",
+        "focus-within:ring-2 focus-within:ring-ring focus-within:border-ring",
+        "transition-all duration-200",
+        className
+      )}
       data-testid="chat-input-container"
     >
-      <div className="max-w-3xl mx-auto p-6">
-        {/* Error Display */}
-        {error && (
-          <div
-            className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"
-            data-testid="chat-error"
-            role="alert"
-            aria-live="polite"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-red-600" data-testid="error-message">
-                {error.message}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={retry}
-                  className="text-red-600 border-red-300 hover:bg-red-50"
-                  data-testid="retry-button"
-                  aria-label="Retry sending message"
-                >
-                  Retry
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={clearError}
-                  className="text-red-600 hover:bg-red-50"
-                  data-testid="dismiss-error-button"
-                  aria-label="Dismiss error"
-                >
-                  ×
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Input Form */}
-        <form
-          onSubmit={handleSubmit}
-          className="flex gap-3 items-end"
-          data-testid="chat-form"
-        >
-          <div className="flex-1 relative">
-            <Textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Try asking a question to get started!"
-              className="min-h-[44px] max-h-32 resize-none border-gray-300 rounded-xl pr-12 text-sm leading-relaxed focus:border-blue-500 focus:ring-blue-500"
-              disabled={isLoading}
-              data-testid="chat-textarea"
-              aria-label="Chat message"
-              aria-describedby="character-count"
-            />
-
-            <div
-              className="absolute bottom-2 right-2 text-xs text-gray-400"
-              id="character-count"
-              data-testid="character-count"
-              aria-live="polite"
-            >
-              {input.length}/2000
-            </div>
-          </div>
-
-          <Button
-            type="submit"
-            disabled={!input.trim() || isLoading}
-            className="h-11 px-4 rounded-xl bg-black hover:bg-gray-800 text-white"
-            data-testid="send-button"
-            aria-label={isLoading ? "Sending message" : "Send message"}
-          >
-            {isLoading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="sr-only" data-testid="sending-indicator">
-                  Sending...
-                </span>
-              </>
-            ) : (
-              <Send className="h-4 w-4" />
+      <div className="flex items-end gap-2 p-3">
+        {/* Message Input */}
+        <div className="flex-1 relative z-0">
+          <Textarea
+            ref={textareaRef}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder={placeholderText}
+            className={cn(
+              "text-[0.7rem] xs:text-sm",
+              "resize-none border-0 shadow-none p-0",
+              "bg-transparent placeholder:text-muted-foreground",
+              "focus-visible:ring-0 focus-visible:ring-offset-0",
+              "min-h-[20px] max-h-[120px]"
             )}
-          </Button>
-        </form>
+            style={{ pointerEvents: 'auto' }} // Textarea için de explicit
+            data-testid="message-input"
+            disabled={isSending}
+          />
+        </div>
+
+        {/* RGB LED Strip Effect Send Button - Thick Border */}
+        <div className="shrink-0 relative z-20">
+          {/* SVG Enhanced Glow Filter */}
+          <svg className="absolute inset-0 w-0 h-0">
+            <defs>
+              <filter id="rgbGlow" x="-50%" y="-50%" width="200%" height="200%">
+                <feGaussianBlur stdDeviation="4" result="coloredBlur" />
+                <feMorphology operator="dilate" radius="1" result="dilated" />
+                <feGaussianBlur in="dilated" stdDeviation="8" result="blur" />
+                <feFlood floodColor="#ffffff" floodOpacity="0.3" result="whiteFlood" />
+                <feComposite in="whiteFlood" in2="blur" operator="in" result="whiteGlow" />
+                <feMerge>
+                  <feMergeNode in="whiteGlow" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+          </svg>
+
+          {/* Thick RGB Border Container - Slow & Minimal Pattern */}
+          <motion.div
+            className="relative"
+            style={{
+              '--angle': '0deg',
+              padding: '4px', // Kalın border için
+              borderRadius: '12px',
+              background: (!message.trim() || isSending) ? 'transparent' : `
+                linear-gradient(hsl(0 0% 8%) 0 0) content-box, 
+                conic-gradient(
+                  in hsl longer hue from var(--angle, 0deg),
+                  hsl(0 100% 60% / 1) 0turn,
+                  hsl(120 100% 60% / 1) 0.33turn,
+                  hsl(240 100% 60% / 1) 0.67turn,
+                  hsl(360 100% 60% / 1) 1turn
+                )
+              `,
+              filter: (!message.trim() || isSending) ? 'none' : 'url(#rgbGlow) drop-shadow(0 0 12px rgba(255, 255, 255, 0.4))',
+              transition: 'opacity 0.3s ease',
+              boxShadow: (!message.trim() || isSending) ? 'none' : `
+                0 0 20px rgba(255, 255, 255, 0.2),
+                0 0 40px rgba(255, 255, 255, 0.1),
+                inset 0 0 20px rgba(255, 255, 255, 0.1)
+              `
+            } as React.CSSProperties}
+            animate={(!message.trim() || isSending) ? {} : {
+              '--angle': '360deg'
+            }}
+            transition={{
+              duration: 8, // 3s → 8s (çok daha yavaş)
+              repeat: Infinity,
+              ease: 'linear'
+            }}
+          >
+            {/* Görünür Send Button */}
+            <motion.button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleSend();
+              }}
+              disabled={!message.trim() || isSending}
+              className={cn(
+                "relative p-2",
+                "bg-accent text-accent-foreground",
+                "hover:bg-accent/90 transition-colors duration-200",
+                "active:bg-accent/75",
+                "disabled:cursor-not-allowed disabled:opacity-70",
+                "rounded-lg", // Border ile uyumlu radius
+                "flex items-center justify-center",
+                "w-[36px] h-[36px]", // Biraz daha büyük
+                "shadow-lg" // Button'ın kendine shadow'u
+              )}
+              style={{
+                cursor: (!message.trim() || isSending) ? 'not-allowed' : 'pointer',
+                pointerEvents: 'auto',
+                backgroundColor: (!message.trim() || isSending) ? 'hsl(var(--accent) / 0.5)' : 'hsl(var(--accent))',
+                boxShadow: (!message.trim() || isSending) ? 'none' : `
+                  0 4px 12px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.2)
+                `
+              }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ duration: 0.15, ease: "easeInOut" }}
+              data-testid="send-button"
+            >
+              {isSending ? (
+                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
+              ) : (
+                <Send className="h-4 w-4 drop-shadow-sm" />
+              )}
+              <span className="sr-only">{isSending ? 'Sending...' : 'Send message'}</span>
+            </motion.button>
+          </motion.div>
+        </div>
+      </div>
+      
+      {/* Helper Text */}
+      <div className="px-3 pb-2">
+        <p className="text-[0.6rem] sm:text-xs text-muted-foreground">
+          Press Enter to send, Shift+Enter for new line
+        </p>
       </div>
     </div>
   );

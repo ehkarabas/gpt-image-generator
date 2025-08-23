@@ -1,12 +1,16 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Download, ExternalLink } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useState, useEffect } from 'react';
+import Image from 'next/image';
+import { Download, ExternalLink, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 interface GeneratedImageProps {
-  image: {
+  imageUrl: string;
+  alt?: string;
+  className?: string;
+  image?: {
     id: string;
     image_url: string;
     prompt: string;
@@ -14,132 +18,210 @@ interface GeneratedImageProps {
     quality?: string;
     model?: string;
   };
-  index: number;
+  index?: number;
 }
 
-export function GeneratedImage({ image, index }: GeneratedImageProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  const [downloadError, setDownloadError] = useState<string | null>(null);
+// Helper to check if URL is expired
+function isUrlExpired(url: string): boolean {
+  try {
+    // Extract expiry time from DALL-E URL
+    const urlObj = new URL(url);
+    const seParam = urlObj.searchParams.get('se');
+    if (seParam) {
+      const expiryDate = new Date(decodeURIComponent(seParam));
+      return new Date() > expiryDate;
+    }
+  } catch (error) {
+    console.error('Error parsing URL:', error);
+  }
+  return false;
+}
 
-  const handleDownload = async () => {
-    try {
-      setDownloadError(null);
-      const response = await fetch(image.image_url);
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `generated-image-${image.id}.png`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (error) {
-      console.error("Download failed:", error);
-      setDownloadError("Download failed. Please try again.");
+export function GeneratedImage({ 
+  imageUrl, 
+  image, 
+  index = 0,
+  alt = "Generated image", 
+  className = "" 
+}: GeneratedImageProps) {
+  // Use provided imageUrl or fall back to image.image_url
+  const finalImageUrl = imageUrl || image?.image_url || '';
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
+
+  useEffect(() => {
+    // Check if URL is expired on mount
+    if (finalImageUrl && isUrlExpired(finalImageUrl)) {
+      setIsExpired(true);
+      setHasError(true);
+      setIsLoading(false);
+    }
+  }, [finalImageUrl]);
+
+  const handleImageLoad = () => {
+    setIsLoading(false);
+    setHasError(false);
+    setIsExpired(false);
+  };
+
+  const handleImageError = () => {
+    setIsLoading(false);
+    setHasError(true);
+    // Check if it's an expiry issue
+    if (finalImageUrl && isUrlExpired(finalImageUrl)) {
+      setIsExpired(true);
     }
   };
 
-  return (
-    <div
-      className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm group"
-      data-testid="generated-image"
-      data-image-id={image.id}
-      data-image-index={index}
-    >
-      {/* Image */}
-      <div className="relative">
-        <img
-          src={image.image_url}
-          alt={image.prompt}
-          className={cn(
-            "w-full h-auto transition-opacity duration-300",
-            isLoading ? "opacity-0" : "opacity-100",
+  const handleDownload = async () => {
+    try {
+      // For expired URLs, show alert
+      if (isExpired) {
+        alert('This image has expired and cannot be downloaded. Images are only available for an hour after generation.');
+        return;
+      }
+
+      // Use proxy endpoint for DALL-E URLs to avoid CORS issues
+      const downloadUrl = finalImageUrl.includes('oaidalleapiprodscus.blob.core.windows.net')
+        ? `/api/proxy-image?url=${encodeURIComponent(finalImageUrl)}`
+        : finalImageUrl;
+
+      const response = await fetch(downloadUrl);
+      if (!response.ok) throw new Error('Failed to fetch image');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      
+      // Use modern download approach without DOM manipulation
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `generated-image-${Date.now()}.png`;
+      link.style.display = 'none';
+      
+      // Safer approach: avoid removeChild issues
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup after a delay to ensure download starts
+      setTimeout(() => {
+        try {
+          if (link.parentNode) {
+            link.parentNode.removeChild(link);
+          }
+          window.URL.revokeObjectURL(url);
+        } catch (cleanupError) {
+          console.warn('Download cleanup warning:', cleanupError);
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Download failed:', error);
+      alert('Failed to download image. The image may have expired.');
+    }
+  };
+
+  const handleOpenInNewTab = () => {
+    if (isExpired) {
+      alert('This image has expired. DALL-E images are only available for an hour after generation.');
+      return;
+    }
+    window.open(finalImageUrl, '_blank');
+  };
+
+  if (hasError) {
+    return (
+      <Card className={`p-4 border-destructive ${className}`}>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-destructive">
+            <AlertCircle className="h-4 w-4" />
+            <div className="text-sm font-medium">
+              {isExpired ? 'Image expired' : 'Failed to load image'}
+            </div>
+          </div>
+          {isExpired && (
+            <div className="text-xs text-muted-foreground">
+              DALL-E images expire after an hour. To preserve images, download them when they're generated.
+            </div>
           )}
-          onLoad={() => setIsLoading(false)}
-          onError={() => setIsLoading(false)}
-          data-testid="generated-image-img"
-        />
-
-        {isLoading && (
-          <div
-            className="absolute inset-0 bg-gray-100 animate-pulse rounded-t-lg"
-            data-testid="image-loading-placeholder"
-            aria-label="Image loading"
-          />
-        )}
-
-        {/* Action buttons overlay */}
-        <div
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-          data-testid="image-actions"
-        >
-          <div className="flex gap-1">
-            <Button
+          {image?.prompt && (
+            <div className="mt-2 p-2 bg-muted rounded text-xs">
+              <span className="font-medium">Original prompt:</span> {image.prompt}
+            </div>
+          )}
+          {!isExpired && (
+            <Button 
+              variant="outline" 
               size="sm"
+              onClick={() => window.open(finalImageUrl, '_blank')}
+              className="mt-2"
+            >
+              <ExternalLink className="h-3 w-3 mr-1" />
+              Try opening in new tab
+            </Button>
+          )}
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className={`relative overflow-hidden ${className}`}>
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/50 z-10">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </div>
+      )}
+      
+      <div className="relative group">
+        <Image
+          src={finalImageUrl.includes('oaidalleapiprodscus.blob.core.windows.net') && !isExpired
+            ? `/api/proxy-image?url=${encodeURIComponent(finalImageUrl)}`
+            : finalImageUrl
+          }
+          alt={alt}
+          width={1024}
+          height={1024}
+          className="w-full h-auto rounded-lg"
+          onLoad={handleImageLoad}
+          onError={handleImageError}
+          priority
+          unoptimized // Bypass Next.js image optimization for external URLs
+        />
+        
+        {/* Action buttons overlay */}
+        {!hasError && (
+          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+            <Button
               variant="secondary"
-              className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
+              size="sm"
               onClick={handleDownload}
-              data-testid="download-image-button"
-              aria-label="Download image"
+              className="h-8 w-8 p-0"
+              title="Download image"
             >
               <Download className="h-3 w-3" />
             </Button>
             <Button
-              size="sm"
               variant="secondary"
-              className="h-8 w-8 p-0 bg-white/90 hover:bg-white"
-              onClick={() => window.open(image.image_url, "_blank")}
-              data-testid="open-image-button"
-              aria-label="Open image in new tab"
+              size="sm"
+              onClick={handleOpenInNewTab}
+              className="h-8 w-8 p-0"
+              title="Open in new tab"
             >
               <ExternalLink className="h-3 w-3" />
             </Button>
           </div>
-        </div>
-      </div>
-
-      {/* Image info */}
-      <div className="p-3 space-y-2">
-        <p
-          className="text-sm text-gray-700 line-clamp-2"
-          data-testid="image-description"
-        >
-          Here&apos;s the image you requested based on: &quot;{image.prompt}
-          &quot;.
-        </p>
-
-        {downloadError && (
-          <p
-            className="text-xs text-red-600"
-            data-testid="download-error"
-            role="alert"
-          >
-            {downloadError}
-          </p>
         )}
-
-        <div className="flex items-center justify-between">
-          <span
-            className="text-xs text-gray-500"
-            data-testid="image-attribution"
-          >
-            Image generated by GPT-image-1
-          </span>
-          <div
-            className="flex gap-1 text-xs text-gray-500"
-            data-testid="image-metadata"
-          >
-            <span data-testid="image-size">{image.size}</span>
-            {image.quality && (
-              <>
-                <span>•</span>
-                <span data-testid="image-quality">{image.quality}</span>
-              </>
-            )}
-          </div>
-        </div>
       </div>
-    </div>
+      
+      {/* Image info footer */}
+      <div className="p-2 bg-muted/30 text-xs text-muted-foreground flex items-center justify-between">
+        <span>Generated with DALL-E 3</span>
+        {!hasError && (
+          <span className="text-orange-600 dark:text-orange-400">
+            ⚠️ Expires in an hour
+          </span>
+        )}
+      </div>
+    </Card>
   );
 }
