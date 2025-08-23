@@ -11,23 +11,35 @@ export default function useOAuth() {
       setIsLoading(true)
       const supabase = createClient()
 
+      // Use static site URL instead of dynamic window.location.origin
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin
+      const redirectTo = `${siteUrl}/auth/callback`
+
       console.log('signInWithProvider', provider)
-      console.log('window.location.origin', window.location.origin)
-      console.log('redirectTo', `${window.location.origin}/auth/callback`)
+      console.log('siteUrl', siteUrl)
+      console.log('redirectTo', redirectTo)
       
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo
         }
       })
 
       if (error) {
         toast.error(`Authentication failed: ${error.message}`)
         setIsLoading(false)
+        return
       }
-      // Success durumunda redirect olur, setIsLoading(false) gerekmez
+
+      // Best practice: Use data.url for redirect
+      if (data.url) {
+        console.log('Redirecting to:', data.url)
+        window.location.href = data.url
+      }
+      
     } catch (error) {
+      console.error('OAuth error:', error)
       toast.error('Authentication failed')
       setIsLoading(false)
     }
