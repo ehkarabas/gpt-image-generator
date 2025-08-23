@@ -2,6 +2,10 @@
 
 Modern, responsive GPT-4o chat and AI image generation workspace built with Next.js 15, TypeScript, and Supabase. Each user gets their own personal workspace with conversation management and image gallery.
 
+![GPT Image Generator Preview](./public/images/README_thumbnail.png)
+
+*Experience the modern, responsive chat interface with AI-powered conversations and image generation capabilities.*
+
 ## 🔗 Live Demo
 
 Experience GPT Image Generator in action! The application is deployed and ready to explore:
@@ -13,6 +17,15 @@ Experience GPT Image Generator in action! The application is deployed and ready 
 ---
 
 ## ✨ Key Features
+
+<div align="center">
+  
+| Desktop Experience | Mobile Responsive | Dark Mode |
+|:---:|:---:|:---:|
+| Full-featured chat with sidebar | Hamburger navigation | Elegant dark theme |
+| *Conversation management & AI chat* | *Touch-optimized mobile UI* | *Comprehensive theme system* |
+
+</div>
 
 ### 🎨 **Personal AI Workspace**
 - **Individual Image Generation Workspace**: Each user gets their own dedicated space for AI image creation
@@ -47,6 +60,29 @@ Experience GPT Image Generator in action! The application is deployed and ready 
 ---
 
 ## 🏗️ Architecture & Tech Stack
+
+<div align="center">
+  
+### 🎯 **Modern Full-Stack Architecture**
+
+```mermaid
+graph TB
+    A[User] --> B[Next.js 15 Frontend]
+    B --> C[Supabase Database]
+    B --> D[OpenAI API]
+    C --> E[Real-time Auth]
+    C --> F[PostgreSQL]
+    D --> G[GPT-4o Chat]
+    D --> H[DALL-E 3 Images]
+    
+    style B fill:#0070f3
+    style C fill:#3ecf8e
+    style D fill:#74aa9c
+```
+
+*Scalable, modern architecture with real-time capabilities*
+
+</div>
 
 ### Frontend Excellence
 ```ts
