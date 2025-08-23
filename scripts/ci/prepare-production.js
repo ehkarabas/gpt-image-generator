@@ -6,8 +6,12 @@
  * TDD COMPLIANCE: MUST FAIL when production environment is not properly configured
  */
 
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 function validateProductionEnvironment() {
   console.log("🔍 Validating production environment configuration...");
@@ -181,7 +185,7 @@ function validateProductionEnvironment() {
 }
 
 // Execute preparation
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   try {
     validateProductionEnvironment();
     console.log("✅ Production environment preparation completed successfully");
@@ -192,4 +196,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { validateProductionEnvironment };
+export { validateProductionEnvironment };

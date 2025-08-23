@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
         
         const newProfile = {
           id: user.id,
-          display_name: user.user_metadata?.full_name || user.email?.split('@')[0] || `User ${user.id.substring(0, 8)}`,
+          display_name: (user as any).user_metadata?.full_name || user.email?.split('@')[0] || `User ${user.id.substring(0, 8)}`,
           email: user.email || '',
           created_at: new Date().toISOString(),
         };
@@ -231,7 +231,7 @@ export async function DELETE(request: NextRequest) {
     // Soft delete all user messages if conversations exist
     let messagesError = null;
     if (userConversations && userConversations.length > 0) {
-      const conversationIds = userConversations.map(conv => conv.id);
+      const conversationIds = userConversations.map((conv: any) => conv.id);
       
       const { error } = await supabase
         .from('messages')

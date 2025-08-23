@@ -3,7 +3,7 @@
     "deploymentEnabled": {
       "main": true,
       "config/local": false,
-      "config/remote": false
+      "config/remote": true
     }
   },
   "buildCommand": "cd frontend && npm run build",

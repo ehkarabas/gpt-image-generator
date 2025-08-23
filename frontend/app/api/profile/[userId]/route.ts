@@ -4,10 +4,10 @@ import { createClient } from '@/lib/supabase/client';
 // Get profile by userId (public endpoint - no auth required for viewing)
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    const userId = params.userId;
+    const { userId } = await params;
     console.log('📡 GET /api/profile/[userId] - Starting request for userId:', userId);
     
     if (!userId) {
@@ -63,7 +63,7 @@ export async function GET(
   } catch (error) {
     console.error('❌ GET /api/profile/[userId] error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch profile: ' + (error?.message || 'Unknown error') },
+      { error: 'Failed to fetch profile: ' + ((error as any)?.message || 'Unknown error') },
       { status: 500 }
     );
   }

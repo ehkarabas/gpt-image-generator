@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
       response_format: 'url',
     })
 
-    const imageUrl = response.data[0].url
+    const imageUrl = response.data?.[0]?.url
     if (!imageUrl) {
       throw new Error('No image URL received from OpenAI')
     }
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         image_url: imageUrl,
         image_data: imageUrl, // Store URL in both fields for compatibility
         dalle_response_metadata: {
-          ...response.data[0],
+          ...(response.data?.[0] || {}),
           model: 'dall-e-3',
           size: '1024x1024',
           quality: 'standard',

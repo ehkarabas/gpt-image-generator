@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   if (code) {
     console.log('🔄 exchangeCodeForSession başlıyor...')
     const supabase = await createClient()
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (error) {
       console.error('❌ Auth callback error:', error)

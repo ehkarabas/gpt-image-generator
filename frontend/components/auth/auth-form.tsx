@@ -127,12 +127,12 @@ export function AuthForm({ className }: AuthFormProps) {
           <CardTitle className="text-2xl text-center dark:text-white">
             {mode === 'signin' ? 'Sign in' : 'Create account'}
           </CardTitle>
-          <CardDescription className="text-center dark:text-gray-400">
+          {/* <CardDescription className="text-center dark:text-gray-400">
             {mode === 'signin'
               ? 'Enter your email and password to sign in'
               : 'Enter your email and password to create an account'
             }
-          </CardDescription>
+          </CardDescription> */}
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Social Authentication Buttons */}
@@ -178,6 +178,12 @@ export function AuthForm({ className }: AuthFormProps) {
           </div>
 
           {/* Sign In Form */}
+          <CardDescription className="text-center dark:text-gray-400">
+            {mode === 'signin'
+              ? 'Enter your email and password to sign in'
+              : 'Enter your email and password to create an account'
+            }
+          </CardDescription>
           {mode === 'signin' && (
             <Form {...signInForm}>
               <form

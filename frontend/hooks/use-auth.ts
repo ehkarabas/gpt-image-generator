@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { User, Session, AuthError, AuthEvent } from "@supabase/supabase-js";
+import { User, Session, AuthError, AuthChangeEvent } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -126,7 +126,7 @@ export function useAuth(): UseAuthReturn {
   );
 
   const handleAuthStateChange = useCallback(
-    async (event: AuthEvent, session: Session | null) => {
+    async (event: AuthChangeEvent, session: Session | null) => {
       console.log("Auth state change:", event, session?.user?.id);
       
       setSession(session);
@@ -174,7 +174,7 @@ export function useAuth(): UseAuthReturn {
           setError(error);
         }
         
-        await handleAuthStateChange("INITIAL_SESSION" as AuthEvent, session);
+        await handleAuthStateChange("INITIAL_SESSION" as AuthChangeEvent, session);
       } catch (err) {
         console.error("Initial session error:", err);
         setError(err as Error);

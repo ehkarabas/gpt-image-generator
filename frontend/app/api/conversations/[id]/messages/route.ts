@@ -61,7 +61,7 @@ export async function GET(
     const nextCursor = hasMore ? finalMessages[finalMessages.length - 1].created_at : null;
 
     // Transform to expected format
-    const transformedMessages = finalMessages.map(msg => ({
+    const transformedMessages = finalMessages.map((msg: any) => ({
       id: msg.id,
       conversationId,
       role: msg.role,
@@ -154,7 +154,7 @@ export async function POST(
           .order("created_at", { ascending: true });
 
         // Prepare messages for OpenAI
-        const messages = (previousMessages || []).map(msg => ({
+        const messages = (previousMessages || []).map((msg: any) => ({
           role: msg.role as 'user' | 'assistant',
           content: msg.content
         }));

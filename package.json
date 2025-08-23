@@ -39,6 +39,7 @@
     "db:migrate:test": "node scripts/ci/db-migrate-test.js",
     "db:status": "node scripts/ci/db-status.js",
     "db:query:local:file": "psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -f",
+    "db:query:prod:file": "psql postgresql://postgres.feeyvzojjjmnojvwcgoj:ehkrbs4354@aws-1-eu-central-1.pooler.supabase.com:6543/postgres -f",
     "deploy:verify": "node scripts/ci/deploy-verify.js",
     "ci:deploy:pipeline": "npm run ci:prepare:production && npm run ci:production:setup && npm run db:test:remote && npm run db:migrate:test && npm run test:e2e:remote",
     "ci:prepare:local": "node scripts/ci/prepare-local.js",
