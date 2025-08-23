@@ -39,7 +39,6 @@ import { Label } from "@/components/ui/label";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { useConversations } from "@/hooks/use-conversations";
 import Image from "next/image";
-import logoImg from '@/public/ehlogo.png';
 
 interface AdaptiveHeaderProps {
   showDropdown?: boolean;
@@ -226,7 +225,7 @@ export function AdaptiveHeader({
           </div>
 
           <div className="flex gap-4 items-center justify-end">
-          <Image  src={logoImg} alt="GPT Image Generator" className="hidden ehlogo:inline-block" width={32} height={32} />
+          <Image  src="/ehlogo.png" alt="GPT Image Generator" className="hidden ehlogo:inline-block" width={32} height={32} />
 
           {/* Settings Menu */}
           <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
