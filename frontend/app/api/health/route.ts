@@ -18,7 +18,8 @@ type HealthData = {
   version: string;
   services: {
     api: "operational" | "error";
-    database: "configured" | "missing" | "error";
+    database: "healthy" | "configured" | "missing" | "error";
+    mongodb: "healthy" | "partial" | "configured" | "missing" | "error";
     ai: "configured" | "missing" | "error";
   };
 };
@@ -34,6 +35,7 @@ export async function GET(): Promise<NextResponse<HealthData>> {
       services: {
         api: "operational",
         database: "missing",
+        mongodb: "missing",
         ai: "missing",
       },
     };
@@ -59,6 +61,44 @@ export async function GET(): Promise<NextResponse<HealthData>> {
       } catch (error) {
         healthData.services.database = "error";
       }
+    }
+
+    // Check MongoDB connections and keep them alive
+    const mongoUris = [
+      process.env.MONGODB_DATABASE_URI_REMOTE,
+      process.env.CONNECT_MONGO_DATABASE_URI_REMOTE
+    ].filter(Boolean);
+
+    if (mongoUris.length > 0) {
+      let mongoHealthy = 0;
+      let mongoTotal = mongoUris.length;
+
+      // Import MongoDB client dynamically
+      try {
+        const { MongoClient } = await import('mongodb');
+        
+        for (const uri of mongoUris) {
+          try {
+            // Create client and test connection to keep MongoDB Atlas alive
+            const client = new MongoClient(uri as string);
+            await client.connect();
+            
+            // Simple ping to keep connection alive
+            await client.db().admin().ping();
+            await client.close();
+            
+            mongoHealthy++;
+          } catch (error) {
+            // MongoDB ping failed, but continue with others
+            console.log('MongoDB ping failed for:', uri?.substring(0, 50) + '...');
+          }
+        }
+      } catch (importError) {
+        console.log('MongoDB client not available, skipping MongoDB ping');
+      }
+
+      healthData.services.mongodb = mongoHealthy === mongoTotal ? "healthy" : 
+                                   mongoHealthy > 0 ? "partial" : "configured";
     }
 
     // Check AI services configuration
@@ -87,6 +127,7 @@ export async function GET(): Promise<NextResponse<HealthData>> {
       services: {
         api: "error",
         database: "error",
+        mongodb: "error",
         ai: "error",
       },
     };
