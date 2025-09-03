@@ -38,14 +38,27 @@ export async function GET(): Promise<NextResponse<HealthData>> {
       },
     };
 
-    // Check database configuration
+    // Check database configuration and connectivity
     const hasSupabaseConfig = !!(
       process.env.NEXT_PUBLIC_SUPABASE_URL &&
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
 
     if (hasSupabaseConfig) {
-      healthData.services.database = "configured";
+      try {
+        // Ping Supabase to keep it alive - simple auth check
+        const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/`, {
+          method: 'HEAD',
+          headers: {
+            'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`
+          }
+        });
+        
+        healthData.services.database = response.ok ? "healthy" : "configured";
+      } catch (error) {
+        healthData.services.database = "error";
+      }
     }
 
     // Check AI services configuration
