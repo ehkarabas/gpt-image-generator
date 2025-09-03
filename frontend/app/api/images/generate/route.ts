@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUser } from '@/lib/supabase/auth-helper'
 import OpenAI from 'openai'
 
+// Vercel timeout configuration
+export const maxDuration = 60; // 60 seconds timeout
+export const runtime = 'nodejs';
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 })

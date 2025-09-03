@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthUser } from "@/lib/supabase/auth-helper";
 
+// Vercel timeout configuration
+export const maxDuration = 60;
+export const runtime = 'nodejs';
+
 export async function POST(req: NextRequest) {
   const { user, supabase, error: authError } = await getAuthUser(req);
   

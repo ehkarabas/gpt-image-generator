@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 
+// Vercel timeout configuration
+export const maxDuration = 10;
+export const runtime = 'nodejs';
+
 /**
  * Health check endpoint for production deployment validation
  * Returns basic service status and environment information

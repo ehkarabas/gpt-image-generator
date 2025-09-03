@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/supabase/auth-helper';
 
+// Vercel timeout configuration
+export const maxDuration = 60;
+export const runtime = 'nodejs';
+
 // GET - Fetch messages for a conversation
 export async function GET(
   req: NextRequest,

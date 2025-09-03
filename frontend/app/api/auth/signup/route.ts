@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
+// Vercel timeout configuration
+export const maxDuration = 30;
+export const runtime = 'nodejs';
+
 export async function POST(request: NextRequest) {
   try {
     const { email, password, displayName } = await request.json();

@@ -11,8 +11,9 @@
   "installCommand": "npm install",
   "framework": "nextjs",
   "functions": {
-    "app/api/**": {
-      "runtime": "nodejs18.x"
+    "frontend/app/api/**/*.ts": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 60
     }
   }
 }

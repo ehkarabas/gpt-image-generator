@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthUser } from '@/lib/supabase/auth-helper';
 
+// Vercel timeout configuration
+export const maxDuration = 30;
+export const runtime = 'nodejs';
+
 // Get user profile
 export async function GET(request: NextRequest) {
   try {
